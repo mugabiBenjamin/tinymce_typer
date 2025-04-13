@@ -1,0 +1,32 @@
+# TinyMCE Typer Setup
+
+```bash
+python3 --version
+
+sudo apt update
+sudo apt install python3-full python3-venv
+
+mkdir -p ~/Desktop/tinymce_typer
+cd ~/Desktop/tinymce_typer
+
+---
+
+sudo apt install python3-venv
+python3 -m venv tinymce_venv
+
+source tinymce_venv/bin/activate
+
+pip install selenium
+pip install webdriver-manager
+pip install pyperclip
+
+sudo apt install xclip
+sudo apt install xvfb
+
+mkdir -p ~/Desktop/tinymce_typer/scripts
+touch ~/Desktop/tinymce_typer/scripts/tinymce_typer.py
+
+python ~/Desktop/tinymce_typer/scripts/tinymce_typer.py <url-to-answer-sheet> ~/Desktop/tinymce_typer/content.md
+
+deactivate
+```
