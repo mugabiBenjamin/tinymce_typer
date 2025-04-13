@@ -1,7 +1,7 @@
 # TinyMCE Typer
 
 ![Python Version](https://img.shields.io/badge/Python-3.10%2B-blue?style=flat-square&logo=python)
-![License](https://img.shields.io/github/license/yourusername/tinymce_typer?style=flat-square)
+![License](https://img.shields.io/github/license/mugabiBenjamin/tinymce_typer?style=flat-square)
 ![Status](https://img.shields.io/badge/status-active-success?style=flat-square)
 ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square&logo=github)
 
@@ -12,6 +12,7 @@ A Python script to automate typing or pasting content into [TinyMCE](https://www
 - [Setup Instructions](#setup-instructions)
 - [Contributing](#contributing)
 - [Notes](#notes)
+- [License](#license)
 - [Feedback](#feedback)
 
 ## Features
@@ -97,6 +98,10 @@ source tinymce_venv/bin/activate
 ```bash
 pip freeze > requirements.txt
 ```
+
+## License
+
+- This project is licensed under the [MIT License](LICENSE).
 
 ## Feedback
 
