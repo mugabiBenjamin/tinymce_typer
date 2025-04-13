@@ -1,0 +1,23 @@
+# Ignore Python virtual environment
+tinymce_venv/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment files
+.env
+
+# OS and editor-related files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Logs and runtime files
+*.log
+
+# Selenium related artifacts (e.g. downloaded drivers)
+*.log
+*.cache/
