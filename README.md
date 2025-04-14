@@ -5,85 +5,187 @@
 ![Status](https://img.shields.io/badge/status-active-success?style=flat-square)
 ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square&logo=github)
 
-A Python script to automate typing or pasting content into [TinyMCE](https://www.tiny.cloud/) editors using Selenium — great for filling in online text editors like vClass coursework pages using content from local markdown files.
+A Python automation tool for populating [TinyMCE](https://www.tiny.cloud/) editors in web applications with content from various text-based files.
 
+- [Overview](#overview)
 - [Features](#features)
-- [Project Structure](#project-structure)
-- [Setup Instructions](#setup-instructions)
-- [Contributing](#contributing)
+- [Supported Files Types](#supported-file-types)
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Configuration](#configuration)
+- [Development](#development)
+  - [Project Structure](#project-structure)
+  - [Contributing](#contributing)
 - [Notes](#notes)
-- [License](#license)
+- [Troubleshooting](#troubleshooting)
 - [Feedback](#feedback)
+- [License](#license)
+- [Acknowledgements](#acknowledgements)
+
+## Overview
+
+**TinyMCE Typer** is a utility for automating text input into TinyMCE-based rich text editors on web pages. It uses Selenium WebDriver to interact with browsers and input content from text files into TinyMCE editors, which can be useful for testing, content migration, or form automation.
 
 ## Features
 
-- Automates typing/pasting into TinyMCE editors via Selenium
-- Clipboard support using `pyperclip`
-- Headless-compatible with `xvfb`
-- Local Markdown file input
-- Works with Chromium and Chrome browsers
+- Automatically populate TinyMCE editors with content from text-based files
+- Supports multiple file formats including `markdown`, `plain text`, and more
+- Supports headless operation through `Xvfb`
+- Clipboard-based content insertion for more reliable text input
+- Compatible with most TinyMCE-enabled websites
 
-## Project Structure
+## Supported File Types
 
-```plaintext
-├── scripts/
-│   ├── tinymce_typer.py    # Main script file
-├── .gitignore              # Specifies files and directories to be ignored by Git
-├── content.md              # Main content or documentation file
-├── README.md               # Project overview and instructions
-├── requirements.txt        # List of Python dependencies for the project
-└── SETUP.txt                # Setup instructions or configuration details
+**The tool works with various text-based file types:**
+
+- Markdown files (`.md`, `.markdown`)
+- Plain text files (`.txt`)
+- HTML files (`.html`, `.htm`) - content can be extracted and inserted
+- Any text-based file can be used (`.csv`, `.json`, `.xml`, etc.)
+
+**For Selenium WebDriver functionality:**
+
+- Python script files (`.py`)
+- WebDriver configuration files (`.json`)
+- Browser-specific driver executables (no extension for Linux, `.exe` for Windows)
+- Log files (`.log`)
+
+## Prerequisites
+
+- Python 3.x
+- Linux environment (commands are Ubuntu/Debian-based)
+- Access to websites with TinyMCE editors
+
+## Installation
+
+### Option 1: Clone the Repository
+
+```bash
+# Clone the repository
+git clone https://github.com/mugabiBenjamin/tinymce_typer.git
+
+# Navigate to the project directory
+cd tinymce_typer
+
+# Create and activate a virtual environment
+python3 -m venv tinymce_venv
+source tinymce_venv/bin/activate
+
+# Install required packages
+pip install selenium webdriver-manager pyperclip
+
+# Install system dependencies
+sudo apt install xclip xvfb
 ```
 
-## Setup Instructions
+### Option 2: Manual Setup
 
-- You can follow [SETUP](SETUP.md).
+For detailed setup instructions, please refer to the [SETUP.md](SETUP.md) file.
+
+```bash
+# Create project directory
+mkdir -p ~/Desktop/tinymce_typer
+cd ~/Desktop/tinymce_typer
+
+# Ensure Python and related tools are installed
+sudo apt update
+sudo apt install python3-full python3-venv
+
+# Create and activate a virtual environment
+python3 -m venv tinymce_venv
+source tinymce_venv/bin/activate
+
+# Install required Python packages
+pip install selenium webdriver-manager pyperclip
+
+# Install system dependencies
+sudo apt install xclip xvfb
+
+# Create directory structure
+mkdir -p ~/Desktop/tinymce_typer/scripts
+touch ~/Desktop/tinymce_typer/scripts/tinymce_typer.py
+```
 
 ## Usage
 
-- Run the script using the following command:
+### 1. Activate the virtual environment
 
 ```bash
-python scripts/tinymce_typer.py <URL> <markdown_file>
+source tinymce_venv/bin/activate
 ```
 
-- Example
+### 2. Run the script with a URL to the page containing the TinyMCE editor and the path to your content file
 
 ```bash
-python scripts/tinymce_typer.py https://vclass.ac/dashboard/course-work/ongoing/RGLDmZLV9Am content.md
+python scripts/tinymce_typer.py <URL> <content_file>
 ```
 
-## Contributing
+### Example
 
-### 1. Fork the repository
-
-### 2. Clone the repository
+- You can use any text-based file as input:
 
 ```bash
-git clone https://github.com/mugabiBenjamin/tinymce_typer.git
-cd tinymce_typer/
+# Using markdown
+python ~/Desktop/tinymce_typer/scripts/tinymce_typer.py <url> ~/Desktop/tinymce_typer/content.md
+
+# Using plain text
+python ~/Desktop/tinymce_typer/scripts/tinymce_typer.py <url> ~/Desktop/tinymce_typer/content.txt
+
+# Using HTML
+python ~/Desktop/tinymce_typer/scripts/tinymce_typer.py <url> ~/Desktop/tinymce_typer/content.html
 ```
 
-### 3. Create a new branch
+### 3. When finished, deactivate the virtual environment
 
 ```bash
-git checkout -b feature/branch-name
+deactivate
 ```
 
-### 4. Make your changes and commit them
+## Configuration
+
+The tool uses default configurations that work with most TinyMCE implementations. Advanced configuration options can be found in the [Script](scripts/tinymce_typer.py) file.
+
+## Development
+
+### Project Structure
+
+```plaintext
+tinymce_typer/
+├── scripts/
+│   └── tinymce_typer.py        # Main script file
+├── tinymce_venv/
+├── content.md                  # Main content file
+├── requirements.txt            # Python dependencies
+├── README.md                   # Project overview and instructions
+├── SETUP.md                    # Detailed setup instructions
+├── LICENSE                     # License file
+└── .gitignore                  # Git ignore rules
+```
+
+### Contributing
+
+## 1. Fork the repository
+
+## 2. Create your feature branch
 
 ```bash
-git add .
-git commit -m "Add new feature"
+git checkout -b feature/amazing-feature
 ```
 
-### 5. Push your changes to your forked repository
+## 3. Commit your changes
 
 ```bash
-git push origin feature/branch-name
+git commit -m 'Add some amazing feature'
 ```
 
-### 6. Submit a pull request to the original repository
+## 4. Push to the branch
+
+```bash
+git push origin feature/amazing-feature
+```
+
+## 5. Open a Pull Request
 
 ## Notes
 
@@ -99,10 +201,31 @@ source tinymce_venv/bin/activate
 pip freeze > requirements.txt
 ```
 
-## License
+- The script uses `Selenium WebDriver`, which requires the appropriate browser driver to be installed. The script will attempt to download the necessary driver automatically.
+- The script may not work with all TinyMCE implementations due to variations in editor configurations and DOM structure.
+- For large content files, the script may take some time to process. Be patient and do not interrupt the process.
 
-- This project is licensed under the [MIT License](LICENSE).
+## Troubleshooting
+
+- **Script can't find the TinyMCE editor:** Make sure the page has fully loaded and the TinyMCE editor is present.
+- **Content not pasting correctly:** Check that xclip is properly installed and functioning.
+- **Browser doesn't start:** Check that you have the correct drivers installed for Selenium.
 
 ## Feedback
 
-- Feel free to open an [issue](https://github.com/mugabiBenjamin/tinymce_typer/issues) or contribute if you'd like to improve this script.
+- Found a bug or have a feature request? Please open an [Issue](https://github.com/mugabiBenjamin/tinymce_typer/issues) on GitHub.
+- Want to contribute? Pull requests are welcome! See the [Contributing section](#contributing) for more details.
+
+## License
+
+Distributed under the [MIT License](LICENSE). See LICENSE for more information.
+
+## Acknowledgements
+
+- Selenium WebDriver
+- TinyMCE
+- Pyperclip
+
+Made with ❤️ by the **Hybrids**
+
+[Back to top](#tinymce-typer)
