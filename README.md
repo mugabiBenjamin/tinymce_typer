@@ -83,30 +83,6 @@ sudo apt install xclip xvfb
 
 For detailed setup instructions, please refer to the [SETUP.md](SETUP.md) file.
 
-```bash
-# Create project directory
-mkdir -p ~/Desktop/tinymce_typer
-cd ~/Desktop/tinymce_typer
-
-# Ensure Python and related tools are installed
-sudo apt update
-sudo apt install python3-full python3-venv
-
-# Create and activate a virtual environment
-python3 -m venv tinymce_venv
-source tinymce_venv/bin/activate
-
-# Install required Python packages
-pip install selenium webdriver-manager pyperclip
-
-# Install system dependencies
-sudo apt install xclip xvfb
-
-# Create directory structure
-mkdir -p ~/Desktop/tinymce_typer/scripts
-touch ~/Desktop/tinymce_typer/scripts/tinymce_typer.py
-```
-
 ## Usage
 
 ### 1. Activate the virtual environment
