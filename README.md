@@ -85,13 +85,13 @@ For detailed setup instructions, please refer to the [SETUP.md](SETUP.md) file.
 
 ## Usage
 
-### 1. Activate the virtual environment
+1. Activate the virtual environment
 
 ```bash
 source tinymce_venv/bin/activate
 ```
 
-### 2. Run the script with a URL to the page containing the TinyMCE editor and the path to your content file
+2. Run the script with a URL to the page containing the TinyMCE editor and the path to your content file
 
 ```bash
 python scripts/tinymce_typer.py <URL> <content_file>
@@ -112,7 +112,7 @@ python ~/Desktop/tinymce_typer/scripts/tinymce_typer.py <url> ~/Desktop/tinymce_
 python ~/Desktop/tinymce_typer/scripts/tinymce_typer.py <url> ~/Desktop/tinymce_typer/content.html
 ```
 
-### 3. When finished, deactivate the virtual environment
+3. When finished, deactivate the virtual environment
 
 ```bash
 deactivate
@@ -141,27 +141,27 @@ tinymce_typer/
 
 ### Contributing
 
-#### 1. Fork the repository
+1. Fork the repository
 
-#### 2. Create your feature branch
+2. Create your feature branch
 
 ```bash
 git checkout -b feature/amazing-feature
 ```
 
-#### 3. Commit your changes
+3. Commit your changes
 
 ```bash
 git commit -m 'Add some amazing feature'
 ```
 
-#### 4. Push to the branch
+4. Push to the branch
 
 ```bash
 git push origin feature/amazing-feature
 ```
 
-#### 5. Open a Pull Request
+5. Open a Pull Request
 
 ## Notes
 
