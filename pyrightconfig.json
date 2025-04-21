@@ -1,0 +1,9 @@
+{
+    "venvPath": ".",
+    "venv": "tinymce_venv",
+    "extraPaths": [
+        "./tinymce_venv/lib/python3.12/site-packages"
+    ],
+    "typeCheckingMode": "basic",
+    "useLibraryCodeForTypes": true
+}
