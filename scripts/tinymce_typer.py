@@ -457,6 +457,47 @@ class TinyMCETyper:
             print(f"\nError while typing content: {e}")
             self.save_session()  # Save session on error too
             return False
+    
+    def verify_typed_content(self, editor, expected_content):
+        """Verify that the content was typed correctly.
+        
+        Args:
+            editor: The editor element
+            expected_content: The content that should have been typed
+            
+        Returns:
+            bool: True if content verification passed, False otherwise
+        """
+        try:
+            # Get the current content from the editor
+            actual_content = self.driver.execute_script("return arguments[0].innerHTML;", editor)
+            
+            # Clean up whitespace for comparison
+            expected_clean = ' '.join(expected_content.split())
+            actual_clean = ' '.join(actual_content.split())
+            
+            # Check if the content matches
+            if expected_clean in actual_clean:
+                print("Content verification: SUCCESS")
+                return True
+            else:
+                print("Content verification: FAILED")
+                print("Content may not have been entered correctly")
+                
+                # Calculate similarity percentage
+                import difflib
+                similarity = difflib.SequenceMatcher(None, expected_clean, actual_clean).ratio() * 100
+                print(f"Content similarity: {similarity:.1f}%")
+                
+                # If significant mismatch, offer retry
+                if similarity < 90 and not self.args.no_verification:
+                    response = input("Would you like to retry typing? (y/n): ")
+                    return response.lower() != 'y'
+                
+                return False
+        except Exception as e:
+            print(f"Error during content verification: {e}")
+            return False
 
     def show_progress(self, current, total, offset=0):
         """
