@@ -505,39 +505,45 @@ class TinyMCETyper:
             return self.find_and_focus_editor()
 
     def run(self):
-        """
-        Main execution method that orchestrates the entire typing process.
-        Handles browser setup, content loading, editor detection, and typing.
-        
-        Returns:
-            bool: True if execution was successful, False otherwise
-        """
-        # Set up the browser
+        """Main execution method."""
         if not self.setup_browser():
             return False
         
-        # Load content from file
         if not self.load_content_from_file():
             return False
         
         try:
-            # Load the target webpage
-            print(f"Loading page: {self.args.url}")
-            self.driver.get(self.args.url)
-            print("Page loaded successfully")
+            # Only navigate to URL if we're not using an existing session
+            # or if the user explicitly requests it
+            if not self.args.use_existing or self.args.force_navigation:
+                print(f"Loading page: {self.args.url}")
+                self.driver.get(self.args.url)
+                print("Page loaded successfully")
+            else:
+                print("Using current page in existing browser session")
+                print(f"Current URL: {self.driver.current_url}")
+                
+                # Ask user if they want to navigate to the specified URL
+                if self.args.url != self.driver.current_url:
+                    response = input(f"\nCurrent page differs from specified URL ({self.args.url}).\nNavigate to specified URL? (y/n): ")
+                    if response.lower() == 'y':
+                        print(f"Navigating to: {self.args.url}")
+                        self.driver.get(self.args.url)
+                        print("Page loaded successfully")
             
-            # Load previous session if enabled
+            # Load previous session if available
             if not self.args.no_session:
                 self.load_session()
             
             # Wait for user to confirm the page is ready
             input("\nPress Enter when the page is fully loaded and you're ready to start typing...")
             
-            # Detect and focus the editor
+            # Check for and handle multiple editors if requested
             editor = None
             if self.args.detect_multiple:
                 editor = self.handle_multiple_editors()
             else:
+                # Find and focus the editor
                 editor = self.find_and_focus_editor()
             
             if editor:
@@ -556,19 +562,24 @@ class TinyMCETyper:
                     else:
                         success = self.type_content(editor, self.content)
                 
-                # Show completion message and keep browser open
                 if success:
                     print("\nTyping completed successfully!")
                     print("You can now manually review and submit the form")
-                    print("\nThe browser will remain open until you close this script")
-                    print("Press Ctrl+C in this terminal to exit the script and close the browser")
                     
-                    # Keep the script running until manually terminated
-                    try:
-                        while True:
-                            time.sleep(1)
-                    except KeyboardInterrupt:
-                        print("\nScript terminated by user")
+                    # Don't close browser if we're using an existing session
+                    if self.args.use_existing:
+                        print("\nKeeping existing browser session open")
+                        print("Script will now exit, browser will remain running")
+                    else:
+                        print("\nThe browser will remain open until you close this script")
+                        print("Press Ctrl+C in this terminal to exit the script and close the browser")
+                        
+                        # Keep the script running until manually terminated
+                        try:
+                            while True:
+                                time.sleep(1)
+                        except KeyboardInterrupt:
+                            print("\nScript terminated by user")
                 else:
                     print("\nTyping process encountered errors")
             
@@ -577,14 +588,17 @@ class TinyMCETyper:
         except Exception as e:
             print(f"Unexpected error: {e}")
         finally:
-            # Remind user how to exit and keep browser open until they decide to quit
-            print("\nReminder: Press Ctrl+C to quit and close the browser")
-            try:
-                while True:
-                    time.sleep(1)
-            except KeyboardInterrupt:
-                print("\nExiting and closing browser")
-                self.driver.quit()
+            # Only quit the driver if we're not using an existing session
+            if not self.args.use_existing:
+                print("\nReminder: Press Ctrl+C to quit and close the browser")
+                try:
+                    while True:
+                        time.sleep(1)
+                except KeyboardInterrupt:
+                    print("\nExiting and closing browser")
+                    self.driver.quit()
+            else:
+                print("\nExiting while keeping browser session open")
 
 
 def parse_arguments():
