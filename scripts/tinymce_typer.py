@@ -602,13 +602,7 @@ class TinyMCETyper:
 
 
 def parse_arguments():
-    """
-    Parse command line arguments using argparse.
-    Defines all the options available for configuring the script.
-    
-    Returns:
-        Namespace: The parsed arguments
-    """
+    """Parse command line arguments."""
     parser = argparse.ArgumentParser(description='Automate typing text into TinyMCE editor')
     parser.add_argument('url', help='URL of the page with TinyMCE editor')
     parser.add_argument('file', help='Path to the text file containing content to type')
@@ -630,6 +624,17 @@ def parse_arguments():
                         help='Reset progress from previous session')
     parser.add_argument('--detect-multiple', action='store_true',
                         help='Detect and select from multiple TinyMCE editors')
+    
+    # Add new arguments for using existing browser session
+    parser.add_argument('--use-existing', action='store_true',
+                        help='Connect to an existing browser session instead of starting new one')
+    parser.add_argument('--debugging-port', type=int, default=9222,
+                        help='Port for remote debugging (default: 9222, used with --use-existing)')
+    parser.add_argument('--marionette-port', type=int, default=None,
+                        help='Port for Firefox Marionette (used with --use-existing for Firefox)')
+    parser.add_argument('--force-navigation', action='store_true',
+                        help='Force navigation to URL even when using existing browser')
+                        
     return parser.parse_args()
 
 
