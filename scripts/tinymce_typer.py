@@ -29,7 +29,7 @@ class TinyMCETyper:
         self.editor_found = False  # Flag to track if editor was successfully located
         self.content = ""  # Will store the content to be typed
         self.start_time = None  # For calculating typing speed and ETA
-    
+
     def setup_browser(self):
         """Set up and return the selected browser driver.
         
@@ -71,7 +71,7 @@ class TinyMCETyper:
             print(f"Error setting up browser: {e}")
             print("Please make sure the browser is installed correctly.")
             return False
-        
+
     def connect_to_existing_browser(self):
         """Connect to an existing browser session using remote debugging.
         
@@ -159,7 +159,7 @@ class TinyMCETyper:
         except Exception as e:
             print(f"Critical connection error: {type(e).__name__}: {e}")
             return False
-    
+
     def load_content_from_file(self):
         """
         Load the content to be typed from the specified file.
@@ -179,7 +179,7 @@ class TinyMCETyper:
         except IOError as e:
             print(f"Error reading file: {e}")
             return False
-        
+
     def load_multiple_files(self):
         """Load content from multiple files if specified.
         
@@ -308,7 +308,7 @@ class TinyMCETyper:
         except Exception as e:
             print(f"Unexpected error while finding editor: {e}")
             return None
-        
+
     def find_editor(self):
         """Find various types of rich text editors.
         
@@ -590,7 +590,7 @@ class TinyMCETyper:
             print(f"\nError while typing content: {e}")
             self.save_session()  # Save session on error too
             return False
-        
+
     def type_content_batched(self, editor, content):
         """Type content in small batches for better performance.
         
@@ -660,7 +660,7 @@ class TinyMCETyper:
             print(f"\nError while typing content in batches: {e}")
             self.save_session()  # Save session on error too
             return False
-    
+
     def verify_typed_content(self, editor, expected_content):
         """Verify that the content was typed correctly.
         
