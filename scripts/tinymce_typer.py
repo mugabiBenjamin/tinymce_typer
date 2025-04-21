@@ -172,6 +172,45 @@ class TinyMCETyper:
         except IOError as e:
             print(f"Error reading file: {e}")
             return False
+        
+    def load_multiple_files(self):
+        """Load content from multiple files if specified.
+        
+        Returns:
+            bool: True if loading was successful, False otherwise
+        """
+        if not self.args.files:
+            # Fall back to single file
+            return self.load_content_from_file()
+        
+        try:
+            contents = []
+            total_size = 0
+            
+            for file_path in self.args.files:
+                try:
+                    with open(file_path, 'r', encoding='utf-8') as file:
+                        file_content = file.read()
+                        contents.append(file_content)
+                        total_size += len(file_content)
+                    print(f"Successfully loaded content from {file_path} ({len(file_content)} characters)")
+                except FileNotFoundError:
+                    print(f"Error: File not found at {file_path}")
+                    return False
+                except IOError as e:
+                    print(f"Error reading file {file_path}: {e}")
+                    return False
+            
+            print(f"Total content size: {total_size} characters from {len(contents)} files")
+            
+            # Combine all content with optional separator
+            separator = self.args.file_separator if hasattr(self.args, 'file_separator') else "\n\n"
+            self.content = separator.join(contents)
+            
+            return True
+        except Exception as e:
+            print(f"Error loading multiple files: {e}")
+            return False
 
     def find_and_focus_editor(self):
         """
