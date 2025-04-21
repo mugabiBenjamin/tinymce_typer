@@ -1099,69 +1099,67 @@ class TinyMCETyper:
 def parse_arguments():
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(description='Automate typing text into TinyMCE editor')
+    
+    # Required arguments
     parser.add_argument('url', help='URL of the page with TinyMCE editor')
     parser.add_argument('file', help='Path to the text file containing content to type')
+    
+    # Browser options
     parser.add_argument('--browser', choices=['chrome', 'firefox'], default='chrome',
                         help='Browser to use (default: chrome)')
+    parser.add_argument('--profile', default='',
+                        help='Path to browser profile directory')
+    
+    # Editor location options
     parser.add_argument('--iframe-id', default='', 
                         help='ID of the iframe containing TinyMCE (if applicable)')
     parser.add_argument('--editor-id', default='', 
                         help='ID of the TinyMCE editor element (if known)')
+    parser.add_argument('--detect-multiple', action='store_true',
+                        help='Detect and select from multiple TinyMCE editors')
+    
+    # Content insertion options
     parser.add_argument('--type-delay', type=float, default=0.01,
                         help='Delay between keystrokes in seconds (default: 0.01)')
     parser.add_argument('--formatted', action='store_true',
                         help='Preserve HTML formatting in the content')
     parser.add_argument('--no-clipboard', action='store_true',
                         help='Disable clipboard paste attempt')
-    parser.add_argument('--no-session', action='store_true',
-                        help='Disable session saving/loading')
-    parser.add_argument('--reset', action='store_true',
-                        help='Reset progress from previous session')
-    parser.add_argument('--detect-multiple', action='store_true',
-                        help='Detect and select from multiple TinyMCE editors')
-    parser.add_argument('--profile', default='',
-                        help='Path to browser profile directory')
-    parser.add_argument('--use-existing', action='store_true',
-                        help='Connect to an existing browser session instead of starting new one')
-    parser.add_argument('--debugging-port', type=int, default=9222,
-                        help='Port for remote debugging (default: 9222, used with --use-existing)')
-    parser.add_argument('--marionette-port', type=int, default=None,
-                        help='Port for Firefox Marionette (used with --use-existing for Firefox)')
-    parser.add_argument('--force-navigation', action='store_true',
-                        help='Force navigation to URL even when using existing browser')
-
-    # For existing browser support
-    parser.add_argument('--use-existing', action='store_true',
-                        help='Connect to an existing browser session instead of starting new one')
-    parser.add_argument('--debugging-port', type=int, default=9222,
-                        help='Port for remote debugging (default: 9222, used with --use-existing)')
-    parser.add_argument('--marionette-port', type=int, default=None,
-                        help='Port for Firefox Marionette (used with --use-existing for Firefox)')
-    parser.add_argument('--force-navigation', action='store_true',
-                        help='Force navigation to URL even when using existing browser')
-
-    # For profile support
-    parser.add_argument('--profile', default='',
-                        help='Path to browser profile directory')
-
-    # For multi-file support
-    parser.add_argument('--files', nargs='+', default=[],
-                        help='Multiple content files to type sequentially')
-    parser.add_argument('--file-separator', default='\n\n',
-                        help='Separator to use between content from multiple files')
-
-    # For batch typing
     parser.add_argument('--batch', action='store_true',
                         help='Use batch insertion for better performance')
     parser.add_argument('--batch-size', type=int, default=50,
                         help='Number of characters to insert at once (default: 50)')
     parser.add_argument('--batch-delay', type=float, default=0.1,
                         help='Delay between batch insertions in seconds (default: 0.1)')
-
-    # For content verification
+    
+    # Session handling options
+    parser.add_argument('--no-session', action='store_true',
+                        help='Disable session saving/loading')
+    parser.add_argument('--reset', action='store_true',
+                        help='Reset progress from previous session')
+    parser.add_argument('--encrypt', action='store_true',
+                        help='Encrypt session data with a password')
+    
+    # Content verification options
     parser.add_argument('--no-verification', action='store_true',
                         help='Disable content verification after typing')
-                        
+    
+    # Existing browser support
+    parser.add_argument('--use-existing', action='store_true',
+                        help='Connect to an existing browser session instead of starting new one')
+    parser.add_argument('--debugging-port', type=int, default=9222,
+                        help='Port for remote debugging (default: 9222, used with --use-existing)')
+    parser.add_argument('--marionette-port', type=int, default=None,
+                        help='Port for Firefox Marionette (used with --use-existing for Firefox)')
+    parser.add_argument('--force-navigation', action='store_true',
+                        help='Force navigation to URL even when using existing browser')
+    
+    # Multi-file support
+    parser.add_argument('--files', nargs='+', default=[],
+                        help='Multiple content files to type sequentially')
+    parser.add_argument('--file-separator', default='\n\n',
+                        help='Separator to use between content from multiple files')
+    
     return parser.parse_args()
 
 
