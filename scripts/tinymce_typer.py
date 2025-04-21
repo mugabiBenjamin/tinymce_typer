@@ -640,14 +640,22 @@ def parse_arguments():
 
 # Main script entry point
 if __name__ == "__main__":
-    # Parse command line arguments
     args = parse_arguments()
     
-    # Display welcome message
     print("\n========== TinyMCE Typer ==========")
     print("This script automates typing text into a TinyMCE editor")
+    
+    if args.use_existing:
+        print("\nMode: Connecting to existing browser session")
+        if args.browser == 'chrome':
+            print(f"Make sure Chrome is running with: --remote-debugging-port={args.debugging_port}")
+        elif args.browser == 'firefox':
+            port = args.marionette_port or args.debugging_port
+            print(f"Make sure Firefox has remote control enabled on port {port}")
+    else:
+        print("\nMode: Starting new browser session")
+    
     print("Press Ctrl+C in this terminal to exit the script\n")
     
-    # Create instance and run the typer
     typer = TinyMCETyper(args)
     typer.run()
