@@ -3,8 +3,9 @@
     "venv": "tinymce_venv",
     "pythonVersion": "3.12",
     "extraPaths": [
-      "./tinymce_venv/lib/python3.12/site-packages"
+        "./tinymce_venv/lib/python3.12/site-packages"
     ],
     "typeCheckingMode": "basic",
-    "useLibraryCodeForTypes": true
-  }
+    "useLibraryCodeForTypes": true,
+    "python.envFile": "${/home/benjn/Desktop/selenium}/.env"
+}
