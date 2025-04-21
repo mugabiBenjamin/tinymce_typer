@@ -139,23 +139,53 @@ class TinyMCETyper:
             return None
 
     def try_clipboard_paste(self, editor):
-        """Attempt to paste content using clipboard if allowed."""
+        """Attempt to paste content using clipboard methods if allowed."""
         try:
-            print("Attempting clipboard paste method...")
+            print("Attempting clipboard paste methods...")
             original_clipboard = pyperclip.paste()  # Save original clipboard
             
             # Try with a small test first
             test_text = "Test paste functionality"
             pyperclip.copy(test_text)
             
-            # Try different paste methods
+            # Method 1: Try Ctrl+V paste
+            print("Trying Ctrl+V paste method...")
             editor.send_keys(Keys.CONTROL, 'v')
             time.sleep(1)
             
             # Check if paste worked
             editor_content = self.driver.execute_script("return arguments[0].innerHTML;", editor)
-            if test_text in editor_content:
-                print("Clipboard paste works! Using faster paste method...")
+            ctrl_v_success = test_text in editor_content
+            
+            # Method 2: If Ctrl+V failed, try Shift+Insert
+            if not ctrl_v_success:
+                print("Ctrl+V paste failed. Trying Shift+Insert method...")
+                editor.clear()  # Clear any partial content
+                pyperclip.copy(test_text)  # Ensure test text is in clipboard
+                
+                try:
+                    # Try Shift+Insert paste
+                    editor.send_keys(Keys.SHIFT, Keys.INSERT)
+                    time.sleep(1)
+                    
+                    # Check if this method worked
+                    editor_content = self.driver.execute_script("return arguments[0].innerHTML;", editor)
+                    shift_insert_success = test_text in editor_content
+                    
+                    if shift_insert_success:
+                        print("Shift+Insert paste works! Using this paste method...")
+                    else:
+                        print("Shift+Insert paste also failed.")
+                except Exception as e:
+                    print(f"Error with Shift+Insert method: {e}")
+                    shift_insert_success = False
+            else:
+                # Ctrl+V worked, no need to try Shift+Insert
+                shift_insert_success = False
+                
+            # If either method worked, use it for the full content
+            if ctrl_v_success or shift_insert_success:
+                paste_method = Keys.CONTROL + 'v' if ctrl_v_success else (Keys.SHIFT, Keys.INSERT)
                 editor.clear()
                 
                 # Split content into chunks to avoid clipboard limitations
@@ -164,7 +194,12 @@ class TinyMCETyper:
                 
                 for i, chunk in enumerate(chunks):
                     pyperclip.copy(chunk)
-                    editor.send_keys(Keys.CONTROL, 'v')
+                    
+                    if ctrl_v_success:
+                        editor.send_keys(Keys.CONTROL, 'v')
+                    else:
+                        editor.send_keys(Keys.SHIFT, Keys.INSERT)
+                        
                     time.sleep(0.5)
                     print(f"Pasted chunk {i+1}/{len(chunks)}")
                 
@@ -172,13 +207,19 @@ class TinyMCETyper:
                 pyperclip.copy(original_clipboard)
                 return True
             else:
-                print("Clipboard paste not working. Falling back to character typing.")
+                print("All clipboard paste methods failed. Falling back to character typing.")
                 editor.clear()
                 # Restore original clipboard
                 pyperclip.copy(original_clipboard)
                 return False
+                
         except Exception as e:
-            print(f"Error with clipboard method: {e}")
+            print(f"Error with clipboard methods: {e}")
+            try:
+                # Attempt to restore original clipboard even if error occurred
+                pyperclip.copy(original_clipboard)
+            except:
+                pass
             return False
 
     def type_formatted_content(self, editor, content):
