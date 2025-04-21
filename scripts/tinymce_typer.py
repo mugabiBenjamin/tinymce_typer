@@ -262,6 +262,93 @@ class TinyMCETyper:
         except Exception as e:
             print(f"Unexpected error while finding editor: {e}")
             return None
+        
+    def find_editor(self):
+        """Find various types of rich text editors.
+        
+        Returns:
+            list: List of tuples (editor_type, editor_element, frame_element) for each found editor
+        """
+        editors = []
+        original_window = self.driver.current_window_handle
+        
+        # Start from main frame
+        try:
+            self.driver.switch_to.default_content()
+        except:
+            pass
+        
+        # Try TinyMCE
+        try:
+            # Check for common TinyMCE elements
+            possible_selectors = [
+                "div.tox-edit-area__iframe",  # Modern TinyMCE
+                "iframe#tinymce_ifr",         # Common TinyMCE iframe
+                "iframe[id$='_ifr']",         # Any iframe ending with _ifr
+                "div.mce-edit-area iframe"    # Older TinyMCE
+            ]
+            
+            for selector in possible_selectors:
+                try:
+                    iframe_elements = self.driver.find_elements(By.CSS_SELECTOR, selector)
+                    for iframe in iframe_elements:
+                        try:
+                            iframe_id = iframe.get_attribute("id") or "unknown"
+                            self.driver.switch_to.frame(iframe)
+                            editor = self.driver.find_element(By.CSS_SELECTOR, "body")
+                            editors.append((f"TinyMCE ({iframe_id})", editor, iframe))
+                            self.driver.switch_to.default_content()
+                        except:
+                            self.driver.switch_to.default_content()
+                except:
+                    continue
+        except Exception as e:
+            print(f"Error while searching for TinyMCE: {e}")
+            self.driver.switch_to.default_content()
+        
+        # Try CKEditor
+        try:
+            ckeditor_frames = self.driver.find_elements(By.CSS_SELECTOR, "iframe.cke_wysiwyg_frame")
+            for frame in ckeditor_frames:
+                try:
+                    frame_id = frame.get_attribute("id") or "unknown"
+                    self.driver.switch_to.frame(frame)
+                    editor = self.driver.find_element(By.CSS_SELECTOR, "body")
+                    editors.append((f"CKEditor ({frame_id})", editor, frame))
+                    self.driver.switch_to.default_content()
+                except:
+                    self.driver.switch_to.default_content()
+        except Exception as e:
+            print(f"Error while searching for CKEditor: {e}")
+            self.driver.switch_to.default_content()
+            
+        # Try Quill editor
+        try:
+            quill_editors = self.driver.find_elements(By.CSS_SELECTOR, ".ql-editor")
+            for idx, editor in enumerate(quill_editors):
+                editors.append((f"Quill Editor ({idx+1})", editor, None))
+        except Exception as e:
+            print(f"Error while searching for Quill Editor: {e}")
+        
+        # Try generic contenteditable elements
+        try:
+            content_editables = self.driver.find_elements(By.CSS_SELECTOR, "[contenteditable='true']")
+            for idx, editor in enumerate(content_editables):
+                # Skip if already found in another editor type
+                if not any(editor == e[1] for e in editors):
+                    tag_name = editor.tag_name
+                    editors.append((f"ContentEditable {tag_name} ({idx+1})", editor, None))
+        except Exception as e:
+            print(f"Error while searching for contenteditable elements: {e}")
+        
+        # Return to original state
+        try:
+            self.driver.switch_to.window(original_window)
+            self.driver.switch_to.default_content()
+        except:
+            pass
+        
+        return editors
 
     def try_clipboard_paste(self, editor):
         """
