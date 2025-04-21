@@ -58,6 +58,82 @@ class TinyMCETyper:
             print(f"Error setting up browser: {e}")
             print("Please make sure the browser is installed correctly.")
             return False
+        
+    def connect_to_existing_browser(self):
+        """Connect to an existing browser session using remote debugging.
+        
+        Returns:
+            bool: True if connection was successful, False otherwise
+        """
+        try:
+            if self.args.browser == 'chrome':
+                # Check if debugging port is provided
+                if not self.args.debugging_port:
+                    print("Error: --debugging-port is required when using --use-existing with Chrome")
+                    print("Example: Start Chrome with: chrome.exe --remote-debugging-port=9222")
+                    print("Then use: --use-existing --debugging-port=9222")
+                    return False
+                
+                options = webdriver.ChromeOptions()
+                options.add_experimental_option("debuggerAddress", f"localhost:{self.args.debugging_port}")
+                
+                try:
+                    # Connect to the existing Chrome instance
+                    self.driver = webdriver.Chrome(service=webdriver.chrome.service.Service(ChromeDriverManager().install()), options=options)
+                    print(f"Successfully connected to existing Chrome browser on port {self.args.debugging_port}")
+                    
+                    # Verify connection by checking current URL
+                    current_url = self.driver.current_url
+                    print(f"Connected to browser - current URL: {current_url}")
+                    
+                    return True
+                except Exception as e:
+                    print(f"Failed to connect to existing Chrome browser: {e}")
+                    print("\nMake sure Chrome is running with remote debugging enabled:")
+                    print("1. Close all Chrome instances")
+                    print(f"2. Start Chrome with: chrome.exe --remote-debugging-port={self.args.debugging_port}")
+                    print("3. Then run this script again")
+                    return False
+            
+            elif self.args.browser == 'firefox':
+                # Firefox requires a different approach using Firefox's remote debugging
+                print("Connecting to existing Firefox session...")
+                print("Note: Firefox connection to existing session is experimental")
+                
+                if not self.args.debugging_port and not self.args.marionette_port:
+                    print("Error: Either --debugging-port or --marionette-port is required for Firefox")
+                    print("Example: --use-existing --marionette-port=2828")
+                    return False
+                
+                port = self.args.marionette_port or self.args.debugging_port
+                
+                options = webdriver.FirefoxOptions()
+                options.add_argument("-marionette")
+                
+                try:
+                    # Connect to the Firefox Remote instance
+                    from selenium.webdriver.firefox.remote_connection import FirefoxRemoteConnection
+                    connection = FirefoxRemoteConnection(f"http://localhost:{port}")
+                    self.driver = webdriver.Firefox(
+                        service=webdriver.firefox.service.Service(GeckoDriverManager().install()), 
+                        options=options,
+                        command_executor=connection
+                    )
+                    print(f"Connected to existing Firefox browser on port {port}")
+                    return True
+                except Exception as e:
+                    print(f"Failed to connect to existing Firefox browser: {e}")
+                    print("\nFirefox connection requires the browser to be started with remote control enabled")
+                    print("Please see Firefox documentation for enabling remote debugging or Marionette")
+                    return False
+            
+            else:
+                print(f"Error: Browser {self.args.browser} does not support existing session connection")
+                return False
+                
+        except Exception as e:
+            print(f"Unexpected error when connecting to existing browser: {e}")
+            return False
     
     def load_content_from_file(self):
         """
