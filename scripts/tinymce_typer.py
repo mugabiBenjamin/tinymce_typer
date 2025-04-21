@@ -965,6 +965,38 @@ def parse_arguments():
                         help='Port for Firefox Marionette (used with --use-existing for Firefox)')
     parser.add_argument('--force-navigation', action='store_true',
                         help='Force navigation to URL even when using existing browser')
+
+    # For existing browser support
+    parser.add_argument('--use-existing', action='store_true',
+                        help='Connect to an existing browser session instead of starting new one')
+    parser.add_argument('--debugging-port', type=int, default=9222,
+                        help='Port for remote debugging (default: 9222, used with --use-existing)')
+    parser.add_argument('--marionette-port', type=int, default=None,
+                        help='Port for Firefox Marionette (used with --use-existing for Firefox)')
+    parser.add_argument('--force-navigation', action='store_true',
+                        help='Force navigation to URL even when using existing browser')
+
+    # For profile support
+    parser.add_argument('--profile', default='',
+                        help='Path to browser profile directory')
+
+    # For multi-file support
+    parser.add_argument('--files', nargs='+', default=[],
+                        help='Multiple content files to type sequentially')
+    parser.add_argument('--file-separator', default='\n\n',
+                        help='Separator to use between content from multiple files')
+
+    # For batch typing
+    parser.add_argument('--batch', action='store_true',
+                        help='Use batch insertion for better performance')
+    parser.add_argument('--batch-size', type=int, default=50,
+                        help='Number of characters to insert at once (default: 50)')
+    parser.add_argument('--batch-delay', type=float, default=0.1,
+                        help='Delay between batch insertions in seconds (default: 0.1)')
+
+    # For content verification
+    parser.add_argument('--no-verification', action='store_true',
+                        help='Disable content verification after typing')
                         
     return parser.parse_args()
 
