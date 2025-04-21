@@ -583,6 +583,76 @@ class TinyMCETyper:
             print(f"\nError while typing content: {e}")
             self.save_session()  # Save session on error too
             return False
+        
+    def type_content_batched(self, editor, content):
+        """Type content in small batches for better performance.
+        
+        Args:
+            editor: The editor element
+            content: The content to type
+            
+        Returns:
+            bool: True if typing was successful, False otherwise
+        """
+        try:
+            print("\nStarting to type content using batch insertion...")
+            
+            # Get batch size from args or use default
+            batch_size = self.args.batch_size if hasattr(self.args, 'batch_size') else 50
+            batch_delay = self.args.batch_delay if hasattr(self.args, 'batch_delay') else 0.1
+            
+            print(f"Using batch size of {batch_size} characters with {batch_delay}s delay between batches")
+            
+            # Resume from saved progress if available
+            start_pos = self.progress
+            if start_pos > 0:
+                print(f"Resuming from previous session at character {start_pos}")
+                existing_text = content[:start_pos]
+                remaining_text = content[start_pos:]
+                if len(existing_text) > 0:
+                    self.driver.execute_script(f"arguments[0].innerHTML = arguments[1];", editor, existing_text)
+                content = remaining_text
+            else:
+                editor.clear()
+            
+            # Record start time for progress estimation
+            self.start_time = time.time()
+            
+            # Type the content in batches
+            total_chars = len(content)
+            
+            for i in range(0, total_chars, batch_size):
+                current_pos = start_pos + i
+                end_pos = min(i + batch_size, total_chars)
+                batch = content[i:end_pos]
+                
+                # Escape special characters
+                escaped_batch = batch.replace("'", "\\'").replace("\n", "\\n").replace("\r", "\\r")
+                
+                # Insert the batch
+                script = f"arguments[0].innerHTML += '{escaped_batch}';"
+                self.driver.execute_script(script, editor)
+                
+                # Save progress periodically
+                self.progress = current_pos + (end_pos - i)
+                if self.progress % (batch_size * 5) == 0:
+                    self.save_session()
+                
+                # Show progress
+                self.show_progress(i + (end_pos - i), total_chars, start_pos)
+                
+                time.sleep(batch_delay)  # Shorter delay between batches
+            
+            # Final progress update
+            self.progress = start_pos + total_chars
+            self.save_session()
+            
+            print("\nFinished typing content!")
+            return True
+        except Exception as e:
+            print(f"\nError while typing content in batches: {e}")
+            self.save_session()  # Save session on error too
+            return False
     
     def verify_typed_content(self, editor, expected_content):
         """Verify that the content was typed correctly.
