@@ -69,7 +69,7 @@ class TinyMCETyper:
         """Connect to an existing browser session using remote debugging.
         
         Returns:
-            bool: True if connection was successful, False otherwise with detailed error messages
+            bool: True if connection was successful, False otherwise
         """
         try:
             if self.args.browser == 'chrome':
@@ -85,39 +85,35 @@ class TinyMCETyper:
                 
                 try:
                     # Connect to the existing Chrome instance
-                    self.driver = webdriver.Chrome(
-                        service=webdriver.chrome.service.Service(ChromeDriverManager().install()),
-                        options=options
-                    )
+                    self.driver = webdriver.Chrome(service=webdriver.chrome.service.Service(ChromeDriverManager().install()), options=options)
+                    
+                    # Verify connection by checking browser state
+                    self.driver.execute_script("return document.readyState")
                     print(f"Successfully connected to existing Chrome browser on port {self.args.debugging_port}")
                     
-                    try:
-                        # Verify connection by checking browser state
-                        ready_state = self.driver.execute_script("return document.readyState")
-                        current_url = self.driver.current_url
-                        print(f"Connection verified - browser is responsive (readyState: {ready_state})")
-                        print(f"Current URL: {current_url}")
-                        return True
-                    except WebDriverException as e:
-                        if "disconnected" in str(e).lower():
-                            print("Error: Browser connection was lost. Is Chrome still running?")
-                        elif "session" in str(e).lower():
-                            print("Error: Invalid session. Chrome might have been restarted.")
-                        else:
-                            print(f"Connection verification error: {e}")
-                        return False
+                    # Verify connection by checking current URL
+                    current_url = self.driver.current_url
+                    print(f"Connected to browser - current URL: {current_url}")
                     
-                except Exception as e:
-                    print(f"Failed to connect to existing Chrome browser: {e}")
-                    print("\nTroubleshooting steps:")
+                    return True
+                except WebDriverException as e:
+                    if "disconnected" in str(e).lower():
+                        print("Error: Browser connection was lost. Is Chrome still running?")
+                    elif "session" in str(e).lower():
+                        print("Error: Invalid session. Chrome might have been restarted.")
+                    else:
+                        print(f"Connection error: {e}")
+                        
+                    print("\nMake sure Chrome is running with remote debugging enabled:")
                     print("1. Close all Chrome instances")
                     print(f"2. Start Chrome with: chrome.exe --remote-debugging-port={self.args.debugging_port}")
-                    print("3. Make sure no other application is using this port")
-                    print("4. Then run this script again")
+                    print("3. Then run this script again")
                     return False
             
             elif self.args.browser == 'firefox':
+                # Firefox requires a different approach using Firefox's remote debugging
                 print("Connecting to existing Firefox session...")
+                print("Note: Firefox connection to existing session is experimental")
                 
                 if not self.args.debugging_port and not self.args.marionette_port:
                     print("Error: Either --debugging-port or --marionette-port is required for Firefox")
@@ -138,37 +134,23 @@ class TinyMCETyper:
                         options=options,
                         command_executor=connection
                     )
+                    
+                    # Verify connection
+                    self.driver.execute_script("return document.readyState")
                     print(f"Connected to existing Firefox browser on port {port}")
-                    
-                    try:
-                        # Verify Firefox connection
-                        current_url = self.driver.current_url
-                        print(f"Connection verified - current URL: {current_url}")
-                        return True
-                    except WebDriverException as e:
-                        print(f"Firefox connection verification failed: {e}")
-                        print("The browser might be unresponsive or the connection unstable")
-                        return False
-                    
+                    return True
                 except Exception as e:
                     print(f"Failed to connect to existing Firefox browser: {e}")
-                    print("\nTroubleshooting steps:")
-                    print("1. Firefox requires special configuration for remote control:")
-                    print("   - Set 'marionette.enabled' to true in about:config")
-                    print("   - Start Firefox with: firefox -marionette -start-debugger-server {port}")
-                    print("2. Make sure the Firefox profile allows remote connections")
-                    print("3. Verify no firewall is blocking the connection")
+                    print("\nFirefox connection requires the browser to be started with remote control enabled")
+                    print("Please see Firefox documentation for enabling remote debugging or Marionette")
                     return False
             
             else:
-                print(f"Error: Browser '{self.args.browser}' does not support existing session connection")
-                supported_browsers = ['chrome', 'firefox']
-                print(f"Supported browsers: {', '.join(supported_browsers)}")
+                print(f"Error: Browser {self.args.browser} does not support existing session connection")
                 return False
-                
+                    
         except Exception as e:
-            print(f"Unexpected error when connecting to existing browser: {type(e).__name__}: {e}")
-            print("Please check your browser configuration and try again")
+            print(f"Critical connection error: {type(e).__name__}: {e}")
             return False
     
     def load_content_from_file(self):
