@@ -13,6 +13,19 @@ from selenium.common.exceptions import TimeoutException, NoSuchElementException,
 from webdriver_manager.chrome import ChromeDriverManager
 from webdriver_manager.firefox import GeckoDriverManager
 
+# Optional encryption support
+ENCRYPTION_AVAILABLE = False
+try:
+    import base64
+    from cryptography.fernet import Fernet
+    from cryptography.hazmat.primitives import hashes
+    from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+    ENCRYPTION_AVAILABLE = True
+except ImportError:
+    # Provide more informative message about missing dependencies
+    print("Note: Encryption features will be disabled. To enable encryption, install the cryptography package:")
+    print("pip install cryptography")
+
 class TinyMCETyper:
     def __init__(self, args):
         """
