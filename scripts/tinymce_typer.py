@@ -847,8 +847,13 @@ class TinyMCETyper:
         if not self.setup_browser():
             return False
         
-        if not self.load_content_from_file():
-            return False
+        # Handle multiple files if specified, otherwise load single file
+        if self.args.files:
+            if not self.load_multiple_files():
+                return False
+        else:
+            if not self.load_content_from_file():
+                return False
         
         try:
             # Only navigate to URL if we're not using an existing session
@@ -883,6 +888,33 @@ class TinyMCETyper:
             else:
                 # Find and focus the editor
                 editor = self.find_and_focus_editor()
+                
+                # If standard method fails, try the new multi-editor finder
+                if not editor:
+                    editors = self.find_editor()
+                    if editors:
+                        print(f"Found {len(editors)} alternative editors")
+                        if len(editors) == 1:
+                            editor_type, editor, frame = editors[0]
+                            if frame:
+                                self.driver.switch_to.frame(frame)
+                            print(f"Using {editor_type} editor")
+                        else:
+                            # Let user choose which editor to use
+                            print("Multiple editors found. Please select:")
+                            for idx, (editor_type, _, _) in enumerate(editors):
+                                print(f"{idx+1}. {editor_type}")
+                            try:
+                                choice = int(input("Enter editor number: ")) - 1
+                                if 0 <= choice < len(editors):
+                                    editor_type, editor, frame = editors[choice]
+                                    if frame:
+                                        self.driver.switch_to.frame(frame)
+                                    print(f"Using {editor_type} editor")
+                                else:
+                                    print("Invalid choice")
+                            except ValueError:
+                                print("Invalid input")
             
             if editor:
                 success = False
@@ -893,14 +925,23 @@ class TinyMCETyper:
                     if clipboard_success:
                         success = True
                 
-                # If clipboard failed or was disabled, try character-by-character typing
+                # If clipboard failed or was disabled, try typing methods
                 if not success:
-                    if self.args.formatted:
+                    if self.args.batch:
+                        # Use batched typing for better performance
+                        success = self.type_content_batched(editor, self.content)
+                    elif self.args.formatted:
                         success = self.type_formatted_content(editor, self.content)
                     else:
                         success = self.type_content(editor, self.content)
                 
                 if success:
+                    # Verify content if verification is not disabled
+                    if not self.args.no_verification:
+                        verification = self.verify_typed_content(editor, self.content)
+                        if not verification:
+                            print("Warning: Content verification failed")
+                    
                     print("\nTyping completed successfully!")
                     print("You can now manually review and submit the form")
                     
@@ -937,7 +978,6 @@ class TinyMCETyper:
                     self.driver.quit()
             else:
                 print("\nExiting while keeping browser session open")
-
 
 def parse_arguments():
     """Parse command line arguments."""
