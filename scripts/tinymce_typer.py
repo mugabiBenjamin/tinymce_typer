@@ -32,7 +32,7 @@ class TinyMCETyper:
     
     def setup_browser(self):
         """Set up and return the selected browser driver.
-
+        
         If use_existing flag is set, it will attempt to connect to an existing
         browser session rather than starting a new one.
         """
@@ -45,19 +45,26 @@ class TinyMCETyper:
                 if self.args.browser == 'chrome':
                     options = webdriver.ChromeOptions()
                     options.add_argument('--start-maximized')
+                    
+                    # Add profile support
                     if self.args.profile:
+                        print(f"Using Chrome profile from: {self.args.profile}")
                         options.add_argument(f"--user-data-dir={self.args.profile}")
-                    self.driver = webdriver.Chrome(
-                        service=webdriver.chrome.service.Service(ChromeDriverManager().install()),
-                        options=options
-                    )
+                    
+                    # Updated initialization for newer Selenium versions
+                    self.driver = webdriver.Chrome(service=webdriver.chrome.service.Service(ChromeDriverManager().install()), options=options)
                 else:  # firefox
                     options = webdriver.FirefoxOptions()
-                    self.driver = webdriver.Firefox(
-                        service=webdriver.firefox.service.Service(GeckoDriverManager().install()),
-                        options=options
-                    )
-
+                    
+                    # Add profile support
+                    if self.args.profile:
+                        print(f"Using Firefox profile from: {self.args.profile}")
+                        options.add_argument("-profile")
+                        options.add_argument(self.args.profile)
+                    
+                    # Updated initialization for newer Selenium versions
+                    self.driver = webdriver.Firefox(service=webdriver.firefox.service.Service(GeckoDriverManager().install()), options=options)
+                
                 self.driver.implicitly_wait(10)
                 return True
         except WebDriverException as e:
