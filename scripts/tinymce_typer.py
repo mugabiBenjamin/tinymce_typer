@@ -809,10 +809,7 @@ class TinyMCETyper:
             return encrypted_data
 
     def save_session(self):
-        """
-        Save current session data to file for resuming later.
-        Stores URL, file path, progress, and timestamp.
-        """
+        """Save current session data to file with optional encryption."""
         try:
             session_data = {
                 "url": self.args.url,
@@ -821,9 +818,26 @@ class TinyMCETyper:
                 "timestamp": datetime.now().isoformat()
             }
             
-            # Write session data as JSON to file
-            with open(self.session_file, 'w', encoding='utf-8') as f:
-                json.dump(session_data, f)
+            # Check if encryption is requested and available
+            if hasattr(self.args, 'encrypt') and self.args.encrypt:
+                if ENCRYPTION_AVAILABLE:
+                    if not hasattr(self, 'password'):
+                        self.password = input("Enter password for session encryption: ")
+                    
+                    # Encrypt the session data
+                    encrypted_data = self.encrypt_data(session_data, self.password)
+                    
+                    with open(self.session_file, 'w', encoding='utf-8') as f:
+                        f.write(encrypted_data)
+                    print("Session saved with encryption")
+                else:
+                    print("Warning: Encryption requested but not available. Session saved unencrypted.")
+                    with open(self.session_file, 'w', encoding='utf-8') as f:
+                        json.dump(session_data, f)
+            else:
+                # Save unencrypted
+                with open(self.session_file, 'w', encoding='utf-8') as f:
+                    json.dump(session_data, f)
         except Exception as e:
             print(f"Warning: Failed to save session: {e}")
 
