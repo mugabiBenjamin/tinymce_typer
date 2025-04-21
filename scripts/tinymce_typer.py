@@ -15,32 +15,50 @@ from webdriver_manager.firefox import GeckoDriverManager
 
 class TinyMCETyper:
     def __init__(self, args):
+        """
+        Initialize the TinyMCE Typer with command line arguments.
+        Sets up basic variables needed for tracking progress and state.
+        
+        Args:
+            args: Command line arguments parsed from argparse
+        """
         self.args = args
-        self.driver = None
-        self.session_file = "tinymce_session.json"
-        self.progress = 0
-        self.editor_found = False
-        self.content = ""
-        self.start_time = None
+        self.driver = None  # Will hold the WebDriver instance
+        self.session_file = "tinymce_session.json"  # File to save/load progress
+        self.progress = 0  # Current typing progress (characters typed)
+        self.editor_found = False  # Flag to track if editor was successfully located
+        self.content = ""  # Will store the content to be typed
+        self.start_time = None  # For calculating typing speed and ETA
     
     def setup_browser(self):
-        """Set up and return the selected browser driver."""
+        """
+        Set up and configure the selected browser (Chrome or Firefox).
+        Uses webdriver-manager to automatically download appropriate drivers.
+        
+        Returns:
+            bool: True if browser setup was successful, False otherwise
+        """
         try:
             print(f"Setting up {self.args.browser} browser...")
             if self.args.browser == 'chrome':
+                # Import Chrome-specific components
                 from webdriver_manager.chrome import ChromeDriverManager
                 from selenium.webdriver.chrome.service import Service as ChromeService
                 
+                # Configure Chrome options
                 options = webdriver.ChromeOptions()
-                options.add_argument('--start-maximized')
+                options.add_argument('--start-maximized')  # Start with maximized window
                 self.driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options)
             else:  # firefox
+                # Import Firefox-specific components
                 from webdriver_manager.firefox import GeckoDriverManager
                 from selenium.webdriver.firefox.service import Service as FirefoxService
                 
+                # Configure Firefox options
                 options = webdriver.FirefoxOptions()
                 self.driver = webdriver.Firefox(service=FirefoxService(GeckoDriverManager().install()), options=options)
             
+            # Set implicit wait time for finding elements
             self.driver.implicitly_wait(10)
             return True
         except WebDriverException as e:
@@ -49,8 +67,14 @@ class TinyMCETyper:
             return False
     
     def load_content_from_file(self):
-        """Load and return content from the specified file."""
+        """
+        Load the content to be typed from the specified file.
+        
+        Returns:
+            bool: True if file was successfully loaded, False otherwise
+        """
         try:
+            # Open and read the file with UTF-8 encoding to support special characters
             with open(self.args.file, 'r', encoding='utf-8') as file:
                 self.content = file.read()
             print(f"Successfully loaded content from {self.args.file}")
@@ -63,13 +87,20 @@ class TinyMCETyper:
             return False
 
     def find_and_focus_editor(self):
-        """Find and focus the TinyMCE editor element."""
+        """
+        Find and focus the TinyMCE editor on the page using multiple detection methods.
+        Handles different TinyMCE versions and configurations.
+        
+        Returns:
+            WebElement or None: The editor element if found, None otherwise
+        """
         try:
             print("Searching for TinyMCE editor...")
             
-            # If we have an iframe ID, switch to it
+            # Method 0: If iframe ID is provided, switch to it first
             if self.args.iframe_id:
                 try:
+                    # Wait for iframe to be present and switch to it
                     iframe = WebDriverWait(self.driver, 10).until(
                         EC.presence_of_element_located((By.ID, self.args.iframe_id))
                     )
@@ -79,12 +110,13 @@ class TinyMCETyper:
                     print(f"Warning: Could not find iframe with ID '{self.args.iframe_id}'")
                     print("Attempting to find TinyMCE without switching iframe...")
             
-            # Various methods to find the editor
+            # Variable to store the editor once found
             editor = None
             
-            # Method 1: Direct ID if provided
+            # Method 1: Use direct editor ID if provided
             if self.args.editor_id:
                 try:
+                    # Wait for editor to be clickable using provided ID
                     editor = WebDriverWait(self.driver, 5).until(
                         EC.element_to_be_clickable((By.ID, self.args.editor_id))
                     )
@@ -92,10 +124,10 @@ class TinyMCETyper:
                 except TimeoutException:
                     print(f"Warning: Could not find editor with ID '{self.args.editor_id}'")
             
-            # Method 2: Look for tinymce elements
+            # Method 2: Try common TinyMCE selectors
             if not editor:
                 try:
-                    # Check for common TinyMCE elements
+                    # List of common TinyMCE element selectors for different versions
                     possible_selectors = [
                         "div.tox-edit-area__iframe",  # Modern TinyMCE
                         "iframe#tinymce_ifr",         # Common TinyMCE iframe
@@ -103,6 +135,7 @@ class TinyMCETyper:
                         "div.mce-edit-area iframe"    # Older TinyMCE
                     ]
                     
+                    # Try each selector until we find a match
                     for selector in possible_selectors:
                         try:
                             iframe_element = self.driver.find_element(By.CSS_SELECTOR, selector)
@@ -111,7 +144,7 @@ class TinyMCETyper:
                             print(f"Found TinyMCE using selector: {selector}")
                             break
                         except (NoSuchElementException, WebDriverException):
-                            continue
+                            continue  # Try next selector if this one fails
                 except Exception as e:
                     print(f"Error while searching for TinyMCE elements: {e}")
             
@@ -123,6 +156,7 @@ class TinyMCETyper:
                 except NoSuchElementException:
                     pass
             
+            # If no editor was found, provide troubleshooting tips
             if not editor:
                 print("Error: Could not find TinyMCE editor on the page.")
                 print("Tips:")
@@ -132,7 +166,7 @@ class TinyMCETyper:
                 print("4. Check if the editor is in an iframe structure")
                 return None
             
-            # Focus the editor
+            # Focus the editor using JavaScript
             self.driver.execute_script("arguments[0].focus();", editor)
             print("Successfully focused on the editor")
             self.editor_found = True
@@ -143,12 +177,22 @@ class TinyMCETyper:
             return None
 
     def try_clipboard_paste(self, editor):
-        """Attempt to paste content using clipboard methods if allowed."""
+        """
+        Attempt to paste content using clipboard methods.
+        Tries both Ctrl+V and Shift+Insert methods.
+        
+        Args:
+            editor: The editor WebElement to paste into
+            
+        Returns:
+            bool: True if clipboard paste was successful, False otherwise
+        """
         try:
             print("Attempting clipboard paste methods...")
-            original_clipboard = pyperclip.paste()  # Save original clipboard
+            # Save original clipboard content to restore later
+            original_clipboard = pyperclip.paste()
             
-            # Try with a small test first
+            # Try with a small test first to check if pasting works
             test_text = "Test paste functionality"
             pyperclip.copy(test_text)
             
@@ -157,7 +201,7 @@ class TinyMCETyper:
             editor.send_keys(Keys.CONTROL, 'v')
             time.sleep(1)
             
-            # Check if paste worked
+            # Check if paste worked by examining editor content
             editor_content = self.driver.execute_script("return arguments[0].innerHTML;", editor)
             ctrl_v_success = test_text in editor_content
             
@@ -196,9 +240,11 @@ class TinyMCETyper:
                 chunk_size = 5000
                 chunks = [self.content[i:i+chunk_size] for i in range(0, len(self.content), chunk_size)]
                 
+                # Paste each chunk separately
                 for i, chunk in enumerate(chunks):
                     pyperclip.copy(chunk)
                     
+                    # Use the method that worked in our test
                     if ctrl_v_success:
                         editor.send_keys(Keys.CONTROL, 'v')
                     else:
@@ -207,7 +253,7 @@ class TinyMCETyper:
                     time.sleep(0.5)
                     print(f"Pasted chunk {i+1}/{len(chunks)}")
                 
-                # Restore original clipboard
+                # Restore original clipboard content
                 pyperclip.copy(original_clipboard)
                 return True
             else:
@@ -227,23 +273,43 @@ class TinyMCETyper:
             return False
 
     def type_formatted_content(self, editor, content):
-        """Type content with HTML formatting preserved."""
+        """
+        Type content while preserving HTML formatting.
+        Uses direct innerHTML setting if HTML tags are detected.
+        
+        Args:
+            editor: The editor WebElement to type into
+            content: The content string to be typed
+            
+        Returns:
+            bool: True if formatting and typing was successful, False otherwise
+        """
         try:
-            # Check if content appears to have HTML formatting
+            # Check if content appears to have HTML formatting by looking for common HTML tags
             if '<' in content and '>' in content and ('</p>' in content or '<br' in content or '<div' in content):
                 print("Detected HTML formatting in content, preserving format...")
-                # Use JavaScript to set innerHTML directly
+                # Use JavaScript to set innerHTML directly instead of typing character by character
                 self.driver.execute_script("arguments[0].innerHTML = arguments[1];", editor, content)
                 return True
             else:
-                # Not formatted or simple formatting, use regular typing
+                # Not formatted or simple formatting, use regular typing method
                 return self.type_content(editor, content)
         except Exception as e:
             print(f"Error while handling formatted content: {e}")
             return False
 
     def type_content(self, editor, content):
-        """Type the content into the editor with the specified delay."""
+        """
+        Type the content into the editor character by character.
+        Supports resuming from previous sessions and shows progress.
+        
+        Args:
+            editor: The editor WebElement to type into
+            content: The content string to be typed
+            
+        Returns:
+            bool: True if typing was successful, False otherwise
+        """
         try:
             print("\nStarting to type content...")
             print(f"Using typing delay of {self.args.type_delay} seconds between characters")
@@ -255,10 +321,10 @@ class TinyMCETyper:
                 
                 # Get text already typed
                 existing_text = content[:start_pos]
-                # Get remaining text
+                # Get remaining text to type
                 remaining_text = content[start_pos:]
                 
-                # Set existing text directly
+                # Set existing text directly using JavaScript
                 if len(existing_text) > 0:
                     self.driver.execute_script(f"arguments[0].innerHTML = '{existing_text}';", editor)
                     
@@ -282,15 +348,16 @@ class TinyMCETyper:
                 script = f"arguments[0].innerHTML = arguments[0].innerHTML + '{escaped_char}';"
                 self.driver.execute_script(script, editor)
                 
-                # Save progress periodically
+                # Save progress periodically (every 100 characters)
                 if current_pos % 100 == 0:
                     self.progress = current_pos
                     self.save_session()
                 
-                # Show progress
+                # Show progress updates (every 10 characters)
                 if i % 10 == 0 or i == total_chars - 1:
                     self.show_progress(i, total_chars, start_pos)
                 
+                # Wait between characters to simulate typing
                 time.sleep(self.args.type_delay)
             
             # Final progress update
@@ -305,7 +372,14 @@ class TinyMCETyper:
             return False
 
     def show_progress(self, current, total, offset=0):
-        """Display progress information and estimated time remaining."""
+        """
+        Display progress information and estimated time remaining.
+        
+        Args:
+            current: Current character index
+            total: Total number of characters
+            offset: Starting position offset (for resumed sessions)
+        """
         progress_pct = (current + 1) / total * 100
         
         # Calculate speed and ETA
@@ -315,17 +389,22 @@ class TinyMCETyper:
             remaining_chars = total - current
             remaining_time = remaining_chars / chars_per_sec if chars_per_sec > 0 else 0
             
-            # Format remaining time
+            # Format remaining time in minutes and seconds
             remaining_mins = int(remaining_time // 60)
             remaining_secs = int(remaining_time % 60)
             eta = f"{remaining_mins}m {remaining_secs}s"
             
+            # Print progress with speed and ETA information
             print(f"Progress: {progress_pct:.1f}% ({current+1}/{total} chars) | Speed: {chars_per_sec:.1f} chars/sec | ETA: {eta}", end='\r')
         else:
+            # Simple progress display if timing info is not available
             print(f"Progress: {progress_pct:.1f}% ({current+1}/{total} chars)", end='\r')
 
     def save_session(self):
-        """Save current session data to file."""
+        """
+        Save current session data to file for resuming later.
+        Stores URL, file path, progress, and timestamp.
+        """
         try:
             session_data = {
                 "url": self.args.url,
@@ -334,15 +413,20 @@ class TinyMCETyper:
                 "timestamp": datetime.now().isoformat()
             }
             
+            # Write session data as JSON to file
             with open(self.session_file, 'w', encoding='utf-8') as f:
                 json.dump(session_data, f)
         except Exception as e:
             print(f"Warning: Failed to save session: {e}")
 
     def load_session(self):
-        """Load previous session data if available."""
+        """
+        Load previous session data if available.
+        Prompts user to resume or start over.
+        """
         try:
             if os.path.exists(self.session_file):
+                # Read session data from file
                 with open(self.session_file, 'r', encoding='utf-8') as f:
                     session_data = json.load(f)
                 
@@ -352,6 +436,7 @@ class TinyMCETyper:
                     print(f"Found saved session from {session_data['timestamp']}")
                     print(f"Progress: {self.progress} characters typed")
                     
+                    # Handle reset flag or prompt for user choice
                     if self.args.reset:
                         print("Reset flag provided, starting from beginning")
                         self.progress = 0
@@ -365,7 +450,13 @@ class TinyMCETyper:
             self.progress = 0
 
     def handle_multiple_editors(self):
-        """Find and manage multiple TinyMCE editors on the page."""
+        """
+        Find and manage multiple TinyMCE editors on the page.
+        Allows user to select which editor to use.
+        
+        Returns:
+            WebElement or None: The selected editor element if found, None otherwise
+        """
         try:
             print("Searching for multiple TinyMCE editors...")
             
@@ -375,30 +466,33 @@ class TinyMCETyper:
             except:
                 pass
             
-            # Find all potential TinyMCE instances
+            # Find all potential TinyMCE instances by looking for iframes with ID ending in '_ifr'
             tinymce_iframes = self.driver.find_elements(By.CSS_SELECTOR, "iframe[id$='_ifr']")
             
+            # If no editors found, fall back to standard detection
             if not tinymce_iframes or len(tinymce_iframes) == 0:
                 print("No multiple editors found, using standard editor detection")
                 return self.find_and_focus_editor()
             
             print(f"Found {len(tinymce_iframes)} potential TinyMCE editors")
             
+            # If only one editor, use standard method
             if len(tinymce_iframes) == 1:
-                # Only one editor, use standard method
                 return self.find_and_focus_editor()
             
-            # Multiple editors found
+            # Multiple editors found - let user choose
             print("\nMultiple editors found. Please select which one to use:")
             for i, iframe in enumerate(tinymce_iframes):
                 iframe_id = iframe.get_attribute("id")
                 print(f"{i+1}. Editor in iframe: {iframe_id}")
             
             try:
+                # Get user's choice
                 choice = int(input("\nEnter editor number (or 0 to use standard detection): "))
                 if choice == 0:
                     return self.find_and_focus_editor()
                 elif 1 <= choice <= len(tinymce_iframes):
+                    # Focus the selected editor
                     chosen_iframe = tinymce_iframes[choice-1]
                     self.driver.switch_to.frame(chosen_iframe)
                     editor = self.driver.find_element(By.CSS_SELECTOR, "body")
@@ -418,32 +512,39 @@ class TinyMCETyper:
             return self.find_and_focus_editor()
 
     def run(self):
-        """Main execution method."""
+        """
+        Main execution method that orchestrates the entire typing process.
+        Handles browser setup, content loading, editor detection, and typing.
+        
+        Returns:
+            bool: True if execution was successful, False otherwise
+        """
+        # Set up the browser
         if not self.setup_browser():
             return False
         
+        # Load content from file
         if not self.load_content_from_file():
             return False
         
         try:
-            # Load the page
+            # Load the target webpage
             print(f"Loading page: {self.args.url}")
             self.driver.get(self.args.url)
             print("Page loaded successfully")
             
-            # Load previous session if available
+            # Load previous session if enabled
             if not self.args.no_session:
                 self.load_session()
             
             # Wait for user to confirm the page is ready
             input("\nPress Enter when the page is fully loaded and you're ready to start typing...")
             
-            # Check for and handle multiple editors if requested
+            # Detect and focus the editor
             editor = None
             if self.args.detect_multiple:
                 editor = self.handle_multiple_editors()
             else:
-                # Find and focus the editor
                 editor = self.find_and_focus_editor()
             
             if editor:
@@ -462,6 +563,7 @@ class TinyMCETyper:
                     else:
                         success = self.type_content(editor, self.content)
                 
+                # Show completion message and keep browser open
                 if success:
                     print("\nTyping completed successfully!")
                     print("You can now manually review and submit the form")
@@ -482,6 +584,7 @@ class TinyMCETyper:
         except Exception as e:
             print(f"Unexpected error: {e}")
         finally:
+            # Remind user how to exit and keep browser open until they decide to quit
             print("\nReminder: Press Ctrl+C to quit and close the browser")
             try:
                 while True:
@@ -492,7 +595,13 @@ class TinyMCETyper:
 
 
 def parse_arguments():
-    """Parse command line arguments."""
+    """
+    Parse command line arguments using argparse.
+    Defines all the options available for configuring the script.
+    
+    Returns:
+        Namespace: The parsed arguments
+    """
     parser = argparse.ArgumentParser(description='Automate typing text into TinyMCE editor')
     parser.add_argument('url', help='URL of the page with TinyMCE editor')
     parser.add_argument('file', help='Path to the text file containing content to type')
@@ -517,12 +626,16 @@ def parse_arguments():
     return parser.parse_args()
 
 
+# Main script entry point
 if __name__ == "__main__":
+    # Parse command line arguments
     args = parse_arguments()
     
+    # Display welcome message
     print("\n========== TinyMCE Typer ==========")
     print("This script automates typing text into a TinyMCE editor")
     print("Press Ctrl+C in this terminal to exit the script\n")
     
+    # Create instance and run the typer
     typer = TinyMCETyper(args)
     typer.run()
