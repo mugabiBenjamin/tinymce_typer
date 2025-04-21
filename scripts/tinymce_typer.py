@@ -28,14 +28,18 @@ class TinyMCETyper:
         try:
             print(f"Setting up {self.args.browser} browser...")
             if self.args.browser == 'chrome':
+                from webdriver_manager.chrome import ChromeDriverManager
+                from selenium.webdriver.chrome.service import Service as ChromeService
+                
                 options = webdriver.ChromeOptions()
                 options.add_argument('--start-maximized')
-                # Updated initialization for newer Selenium versions
-                self.driver = webdriver.Chrome(service=webdriver.chrome.service.Service(ChromeDriverManager().install()), options=options)
+                self.driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options)
             else:  # firefox
+                from webdriver_manager.firefox import GeckoDriverManager
+                from selenium.webdriver.firefox.service import Service as FirefoxService
+                
                 options = webdriver.FirefoxOptions()
-                # Updated initialization for newer Selenium versions
-                self.driver = webdriver.Firefox(service=webdriver.firefox.service.Service(GeckoDriverManager().install()), options=options)
+                self.driver = webdriver.Firefox(service=FirefoxService(GeckoDriverManager().install()), options=options)
             
             self.driver.implicitly_wait(10)
             return True
@@ -43,7 +47,7 @@ class TinyMCETyper:
             print(f"Error setting up browser: {e}")
             print("Please make sure the browser is installed correctly.")
             return False
-
+    
     def load_content_from_file(self):
         """Load and return content from the specified file."""
         try:
