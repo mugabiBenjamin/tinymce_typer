@@ -31,36 +31,29 @@ class TinyMCETyper:
         self.start_time = None  # For calculating typing speed and ETA
     
     def setup_browser(self):
-        """
-        Set up and configure the selected browser (Chrome or Firefox).
-        Uses webdriver-manager to automatically download appropriate drivers.
+        """Set up and return the selected browser driver.
         
-        Returns:
-            bool: True if browser setup was successful, False otherwise
+        If use_existing flag is set, it will attempt to connect to an existing
+        browser session rather than starting a new one.
         """
         try:
-            print(f"Setting up {self.args.browser} browser...")
-            if self.args.browser == 'chrome':
-                # Import Chrome-specific components
-                from webdriver_manager.chrome import ChromeDriverManager
-                from selenium.webdriver.chrome.service import Service as ChromeService
+            if self.args.use_existing:
+                print(f"Connecting to existing {self.args.browser} browser session...")
+                return self.connect_to_existing_browser()
+            else:
+                print(f"Setting up new {self.args.browser} browser...")
+                if self.args.browser == 'chrome':
+                    options = webdriver.ChromeOptions()
+                    options.add_argument('--start-maximized')
+                    # Updated initialization for newer Selenium versions
+                    self.driver = webdriver.Chrome(service=webdriver.chrome.service.Service(ChromeDriverManager().install()), options=options)
+                else:  # firefox
+                    options = webdriver.FirefoxOptions()
+                    # Updated initialization for newer Selenium versions
+                    self.driver = webdriver.Firefox(service=webdriver.firefox.service.Service(GeckoDriverManager().install()), options=options)
                 
-                # Configure Chrome options
-                options = webdriver.ChromeOptions()
-                options.add_argument('--start-maximized')  # Start with maximized window
-                self.driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options)
-            else:  # firefox
-                # Import Firefox-specific components
-                from webdriver_manager.firefox import GeckoDriverManager
-                from selenium.webdriver.firefox.service import Service as FirefoxService
-                
-                # Configure Firefox options
-                options = webdriver.FirefoxOptions()
-                self.driver = webdriver.Firefox(service=FirefoxService(GeckoDriverManager().install()), options=options)
-            
-            # Set implicit wait time for finding elements
-            self.driver.implicitly_wait(10)
-            return True
+                self.driver.implicitly_wait(10)
+                return True
         except WebDriverException as e:
             print(f"Error setting up browser: {e}")
             print("Please make sure the browser is installed correctly.")
