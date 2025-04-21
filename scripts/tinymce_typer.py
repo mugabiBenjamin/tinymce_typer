@@ -842,15 +842,42 @@ class TinyMCETyper:
             print(f"Warning: Failed to save session: {e}")
 
     def load_session(self):
-        """
-        Load previous session data if available.
-        Prompts user to resume or start over.
-        """
+        """Load previous session data if available with optional decryption."""
         try:
             if os.path.exists(self.session_file):
-                # Read session data from file
+                # Try to determine if file is encrypted by attempting to parse as JSON
+                encrypted = False
                 with open(self.session_file, 'r', encoding='utf-8') as f:
-                    session_data = json.load(f)
+                    content = f.read()
+                    try:
+                        session_data = json.loads(content)
+                    except json.JSONDecodeError:
+                        # File may be encrypted
+                        encrypted = True
+                
+                if encrypted and ENCRYPTION_AVAILABLE:
+                    if not hasattr(self, 'password'):
+                        self.password = input("Session appears encrypted. Enter password to decrypt: ")
+                    
+                    # Decrypt the session data
+                    with open(self.session_file, 'r', encoding='utf-8') as f:
+                        encrypted_data = f.read()
+                        
+                    decrypted_data = self.decrypt_data(encrypted_data, self.password)
+                    try:
+                        session_data = json.loads(decrypted_data)
+                        print("Session decrypted successfully")
+                    except json.JSONDecodeError:
+                        print("Decryption failed. Incorrect password or corrupted file.")
+                        return
+                elif encrypted and not ENCRYPTION_AVAILABLE:
+                    print("Session appears encrypted but decryption support is not available.")
+                    print("Install the cryptography package to enable decryption.")
+                    return
+                else:
+                    # File is not encrypted
+                    with open(self.session_file, 'r', encoding='utf-8') as f:
+                        session_data = json.load(f)
                 
                 # Check if session is for the same URL and file
                 if session_data["url"] == self.args.url and session_data["file"] == self.args.file:
@@ -858,7 +885,6 @@ class TinyMCETyper:
                     print(f"Found saved session from {session_data['timestamp']}")
                     print(f"Progress: {self.progress} characters typed")
                     
-                    # Handle reset flag or prompt for user choice
                     if self.args.reset:
                         print("Reset flag provided, starting from beginning")
                         self.progress = 0
