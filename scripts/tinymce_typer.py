@@ -23,12 +23,12 @@ class TinyMCETyper:
             args: Command line arguments parsed from argparse
         """
         self.args = args
-        self.driver = None  # Will hold the WebDriver instance
+        self.driver = None                          # Will hold the WebDriver instance
         self.session_file = "tinymce_session.json"  # File to save/load progress
-        self.progress = 0  # Current typing progress (characters typed)
-        self.editor_found = False  # Flag to track if editor was successfully located
-        self.content = ""  # Will store the content to be typed
-        self.start_time = None  # For calculating typing speed and ETA
+        self.progress = 0                           # Current typing progress (characters typed)
+        self.editor_found = False                   # Flag to track if editor was successfully located
+        self.content = ""                           # Will store the content to be typed
+        self.start_time = None                      # For calculating typing speed and ETA
 
     def setup_browser(self):
         """Set up and return the selected browser driver.
@@ -46,23 +46,23 @@ class TinyMCETyper:
                     options = webdriver.ChromeOptions()
                     options.add_argument('--start-maximized')
                     
-                    # Add profile support
+                    # Profile support
                     if self.args.profile:
                         print(f"Using Chrome profile from: {self.args.profile}")
                         options.add_argument(f"--user-data-dir={self.args.profile}")
                     
-                    # Updated initialization for newer Selenium versions
+                    # Initialization for newer Selenium versions
                     self.driver = webdriver.Chrome(service=webdriver.chrome.service.Service(ChromeDriverManager().install()), options=options)
                 else:  # firefox
                     options = webdriver.FirefoxOptions()
                     
-                    # Add profile support
+                    # Profile support
                     if self.args.profile:
                         print(f"Using Firefox profile from: {self.args.profile}")
                         options.add_argument("-profile")
                         options.add_argument(self.args.profile)
                     
-                    # Updated initialization for newer Selenium versions
+                    # Initialization for newer Selenium versions
                     self.driver = webdriver.Firefox(service=webdriver.firefox.service.Service(GeckoDriverManager().install()), options=options)
                 
                 self.driver.implicitly_wait(10)
