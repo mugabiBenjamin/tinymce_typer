@@ -736,8 +736,8 @@ def parse_arguments():
                         help='Reset progress from previous session')
     parser.add_argument('--detect-multiple', action='store_true',
                         help='Detect and select from multiple TinyMCE editors')
-    
-    # Add new arguments for using existing browser session
+    parser.add_argument('--profile', default='',
+                        help='Path to browser profile directory')
     parser.add_argument('--use-existing', action='store_true',
                         help='Connect to an existing browser session instead of starting new one')
     parser.add_argument('--debugging-port', type=int, default=9222,
