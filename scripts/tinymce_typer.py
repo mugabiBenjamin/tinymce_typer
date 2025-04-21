@@ -743,6 +743,70 @@ class TinyMCETyper:
         else:
             # Simple progress display if timing info is not available
             print(f"Progress: {progress_pct:.1f}% ({current+1}/{total} chars)", end='\r')
+            
+    def get_encryption_key(self, password):
+        """Generate an encryption key from password."""
+        if not ENCRYPTION_AVAILABLE:
+            return None
+            
+        try:
+            # Use password to derive a key
+            password_bytes = password.encode()
+            salt = b'TinyMCETyperSalt'  # Fixed salt - could be made configurable
+            kdf = PBKDF2HMAC(
+                algorithm=hashes.SHA256(),
+                length=32,
+                salt=salt,
+                iterations=100000,
+            )
+            key = base64.urlsafe_b64encode(kdf.derive(password_bytes))
+            return key
+        except Exception as e:
+            print(f"Error generating encryption key: {e}")
+            return None
+
+    def encrypt_data(self, data, password):
+        """Encrypt data using the provided password."""
+        if not ENCRYPTION_AVAILABLE:
+            print("Encryption not available. Install cryptography package to enable.")
+            return data
+            
+        try:
+            key = self.get_encryption_key(password)
+            if not key:
+                return data
+                
+            # Convert data to string if it's not already
+            if isinstance(data, dict):
+                data = json.dumps(data)
+                
+            # Encrypt the data
+            f = Fernet(key)
+            encrypted_data = f.encrypt(data.encode())
+            return base64.urlsafe_b64encode(encrypted_data).decode()
+        except Exception as e:
+            print(f"Encryption failed: {e}")
+            return data
+
+    def decrypt_data(self, encrypted_data, password):
+        """Decrypt data using the provided password."""
+        if not ENCRYPTION_AVAILABLE:
+            print("Decryption not available. Install cryptography package to enable.")
+            return encrypted_data
+            
+        try:
+            key = self.get_encryption_key(password)
+            if not key:
+                return encrypted_data
+                
+            # Decrypt the data
+            f = Fernet(key)
+            decoded_data = base64.urlsafe_b64decode(encrypted_data.encode())
+            decrypted_data = f.decrypt(decoded_data).decode()
+            return decrypted_data
+        except Exception as e:
+            print(f"Decryption failed: {e}")
+            return encrypted_data
 
     def save_session(self):
         """
