@@ -11,19 +11,20 @@ TinyMCE Typer is a Python automation tool designed to assist with typing content
 
 - [Features](#features)
 - [Prerequisites](#prerequisites)
-- [Installation](#installation)
-- [Environment Setup](#environment-setup)
-- [Configuration](#configuration)
-- [Usage](#usage)
 - [Supported Editors](#supported-editors)
 - [Supported File Types](#supported-file-types)
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [Usage](#usage)
 - [Project Structure](#project-structure)
 - [Security](#security)
 - [Troubleshooting](#troubleshooting)
+- [Performance Optimization](#performance-optimization)
 - [Notes](#notes)
 - [Contributing](#contributing)
-- [Acknowledgements](#acknowledgements)
 - [License](#license)
+- [Feedback](#feedback)
+- [Acknowledgements](#acknowledgements)
 
 ## Features
 
@@ -58,6 +59,34 @@ Before using TinyMCE Typer, ensure you have the following installed:
 - **WebDriver** for your selected browser (automatically handled by webdriver-manager)
 - **Required Python packages**: See the Installation section
 
+## Supported Editors
+
+TinyMCE Typer can work with various rich text editors:
+
+- **TinyMCE**: Primary supported editor (various versions)
+- **CKEditor**: Basic support for common implementations
+- **Quill Editor**: Basic support
+- **Generic contenteditable elements**: Any element with the contenteditable attribute
+
+## Supported File Types
+
+TinyMCE Typer works with various text-based file formats:
+
+- **Plain text files** (`.txt`): Standard text without formatting
+- **Markdown files** (`.md`, `.markdown`): Preserves Markdown syntax
+- **HTML files** (`.html`, `.htm`): Can preserve HTML formatting when used with `--formatted` flag
+- **Rich Text Format** (`.rtf`): Basic support (text content only)
+- **XML files** (`.xml`): Text content is preserved
+- **JavaScript/CSS/Code files** (`.js`, `.css`, `.py`, etc.): Code can be inserted as-is
+- **CSV/TSV files** (`.csv`, `.tsv`): Will preserve structure but may not format as tables
+- **JSON files** (`.json`): Content will be inserted as raw text
+
+When inserting HTML content into an editor and preserving formatting:
+
+1. Use the `--formatted` flag
+2. Ensure your HTML file uses tags compatible with the editor
+3. Consider using multiple files with `--files` if you need to insert different sections with varied formatting
+
 ## Installation
 
 1. Clone the repository:
@@ -85,18 +114,24 @@ Before using TinyMCE Typer, ensure you have the following installed:
    pip install -r requirements.txt
    ```
 
-The `requirements.txt` file should contain:
+   The `requirements.txt` file should contain:
 
-```plaintext
-selenium
-webdriver-manager
-pyperclip
-cryptography  # Optional, for session encryption
-```
+   ```plaintext
+   selenium
+   webdriver-manager
+   pyperclip
+   cryptography  # Optional, for session encryption
+   ```
 
-## Environment Setup
+4. Optional encryption support:
 
-### Setting up PYTHONPATH
+   ```bash
+   pip install cryptography
+   ```
+
+## Configuration
+
+### Environment Setup
 
 For proper module resolution, create a `.env` file in your project root:
 
@@ -120,8 +155,6 @@ Create a `pyrightconfig.json` file for better code intelligence:
   "python.envFile": "${workspaceFolder}/.env"
 }
 ```
-
-## Configuration
 
 TinyMCE Typer offers multiple configuration options through command-line arguments:
 
@@ -172,61 +205,107 @@ TinyMCE Typer offers multiple configuration options through command-line argumen
 - `--files FILE1 FILE2...`: Multiple content files to type sequentially
 - `--file-separator SEPARATOR`: Separator between content from multiple files
 
+## Advanced Use Cases
+
+### Working with Authenticated Sessions
+
+For sites requiring login:
+
+1. Start Chrome with remote debugging:
+
+   ```bash
+   chrome.exe --remote-debugging-port=9222
+   ```
+
+2. Manually log in to the website
+
+3. Run TinyMCE Typer with existing session:
+
+   ```bash
+   python tinymce_typer.py "https://example.com/editor" "content.txt" --use-existing --debugging-port 9222
+   ```
+
+### Resumable Content Insertion
+
+- For very large content that might need to be resumed:
+
+   ```bash
+   # Initial run
+   python tinymce_typer.py https://example.com/editor large_content.txt --batch
+   
+   # If interrupted, resume later
+   python tinymce_typer.py https://example.com/editor large_content.txt --batch
+   # (The script will detect the previous session and offer to resume)
+   ```
+
+### Content Verification for Critical Applications
+
+- When accuracy is crucial:
+
+   ```bash
+   python tinymce_typer.py https://example.com/editor important_content.txt --type-delay 0.05
+   # (Default verification will run, or explicitly use --no-verification to disable)
+   ```
+
 ## Usage
 
-### Basic Usage
+### Basic Command Structure
 
-- **For faster typing with larger content:**
+```bash
+python scripts/tinymce_typer.py "[URL]" "[FILE]" "[OPTIONS]"
+```
 
-  ```bash
-  python scripts/tinymce_typer.py "https://example.com/page-with-editor" "content.md"
-  ```
+1. **Insert content from a text file into a TinyMCE editor:**
 
-- **For faster typing with larger content:**
+   ```bash
+   python scripts/tinymce_typer.py "https://example.com/page-with-editor" "content.txt"
+   ```
 
-  ```bash
-  python scripts/tinymce_typer.py "https://example.com/editor" "large_content.txt" --batch --batch-size 100
-  ```
+2. **For faster typing with larger content:**
 
-- **Preserve HTML formatting in your content:**
+   ```bash
+   python scripts/tinymce_typer.py "https://example.com/editor" "large_content.txt" --batch --batch-size 100 --batch-delay 0.1
+   ```
 
-  ```bash
-  python scripts/tinymce_typer.py "https://example.com/editor" "formatted_content.html" --formatted
-  ```
+3. **Preserve HTML formatting in your content:**
 
-- **Connect to a running Chrome instance (useful for authenticated sessions):**
+   ```bash
+   python scripts/tinymce_typer.py "https://example.com/editor" "formatted_content.html" --formatted
+   ```
 
-  ```bash
-  # First, start Chrome with remote debugging enabled
-  # chrome.exe --remote-debugging-port=9222
+4. **Connect to a running Chrome instance (useful for authenticated sessions):**
 
-  # Then run the script
-  python scripts/tinymce_typer.py "https://example.com/editor" "content.txt" --use-existing --debugging-port 9222
-  ```
+   ```bash
+   # First, start Chrome with remote debugging enabled
+   # chrome.exe --remote-debugging-port=9222
+ 
+   # Then run the script
+   python scripts/tinymce_typer.py "https://example.com/editor" "content.txt" --use-existing --debugging-port 9222
+   ```
 
-- **Use a custom browser profile for authentication or specific settings:**
+5. **Use a custom browser profile for authentication or specific settings:**
 
-  ```bash
-  python scripts/tinymce_typer.py "https://example.com/editor" "content.txt" --browser firefox --profile /path/to/firefox/profile
-  ```
+   ```bash
+   python scripts/tinymce_typer.py "https://example.com/editor" "content.txt" --browser firefox --profile /path/to/firefox/profile
+   ```
 
-- **When a page contains multiple editors:**
+6. **When a page contains multiple editors:**
 
-  ```bash
-  python scripts/tinymce_typer.py "https://example.com/editor" "content.txt" --detect-multiple
-  ```
+   ```bash
+   python scripts/tinymce_typer.py "https://example.com/editor" "content.txt" --detect-multiple
+   ```
 
-- **Encrypt your session data for sensitive content:**
+7. **Encrypt your session data for sensitive content:**
 
-  ```bash
-  python scripts/tinymce_typer.py "https://example.com/editor" "sensitive_content.txt" --encrypt
-  ```
+   ```bash
+   python scripts/tinymce_typer.py "https://example.com/editor" "sensitive_content.txt" --encrypt
+   ```
 
-- **Insert content from multiple files with custom separators:**
+8. **Insert content from multiple files with custom separators:**
 
-  ```bash
-  python scripts/tinymce_typer.py "https://example.com/editor" --files "intro.txt" "body.txt" "conclusion.txt" --file-separator "---\n\n"
-  ```
+   ```bash
+   python scripts/tinymce_typer.py "https://example.com/editor" --files "intro.txt" "body.txt" "conclusion.txt" --file-separator "---\n\n"
+   ```
 
 ### Advanced Usage Examples
 
@@ -274,34 +353,6 @@ TinyMCE Typer offers multiple configuration options through command-line argumen
 5. Progress is displayed in real-time with speed and ETA
 6. After typing completes, content verification checks if the text was inserted correctly
 7. The browser remains open for you to review and submit the form
-
-## Supported Editors
-
-TinyMCE Typer can work with various rich text editors:
-
-- **TinyMCE**: Primary supported editor (various versions)
-- **CKEditor**: Basic support for common implementations
-- **Quill Editor**: Basic support
-- **Generic contenteditable elements**: Any element with the contenteditable attribute
-
-## Supported File Types
-
-TinyMCE Typer works with various text-based file formats:
-
-- **Plain text files** (`.txt`): Standard text without formatting
-- **Markdown files** (`.md`, `.markdown`): Preserves Markdown syntax
-- **HTML files** (`.html`, `.htm`): Can preserve HTML formatting when used with `--formatted` flag
-- **Rich Text Format** (`.rtf`): Basic support (text content only)
-- **XML files** (`.xml`): Text content is preserved
-- **JavaScript/CSS/Code files** (`.js`, `.css`, `.py`, etc.): Code can be inserted as-is
-- **CSV/TSV files** (`.csv`, `.tsv`): Will preserve structure but may not format as tables
-- **JSON files** (`.json`): Content will be inserted as raw text
-
-When inserting HTML content into an editor and preserving formatting:
-
-1. Use the `--formatted` flag
-2. Ensure your HTML file uses tags compatible with the editor
-3. Consider using multiple files with `--files` if you need to insert different sections with varied formatting
 
 ## Project Structure
 
@@ -353,6 +404,12 @@ If using `--use-existing` with Chrome:
 2. Start Chrome with: `chrome.exe --remote-debugging-port=9222`
 3. Run the script with `--use-existing --debugging-port 9222`
 
+If using Firefox:
+
+   ```bash
+   python tinymce_typer.py https://example.com/editor content.txt --browser firefox --use-existing --marionette-port 2828
+   ```
+
 ### Content Not Inserted Correctly
 
 If content verification fails:
@@ -360,6 +417,38 @@ If content verification fails:
 1. Try decreasing the typing speed with a higher `--type-delay`
 2. Use `--batch` mode with `--batch-size` to adjust chunk size
 3. Use `--formatted` if your content contains HTML
+
+### Browser Driver Issues
+
+If you encounter WebDriver errors:
+
+1. Ensure your browser is compatible with the WebDriver version
+
+2. Try updating the webdriver-manager package:
+
+   ```bash
+   pip install --upgrade webdriver-manager
+   ```
+
+3. Consider specifying a custom WebDriver path if needed
+
+## Performance Optimization
+
+For the best balance of speed and reliability:
+
+1. Use batch mode for large documents:
+
+   ```bash
+   python tinymce_typer.py https://example.com/editor large_doc.txt --batch
+   ```
+
+2. Adjust batch parameters for your specific environment:
+
+   ```bash
+   python tinymce_typer.py https://example.com/editor large_doc.txt --batch --batch-size 75 --batch-delay 0.15
+   ```
+
+3. Try clipboard insertion first (enabled by default), disable with `--no-clipboard` only if issues occur
 
 ## Notes
 
@@ -373,28 +462,6 @@ If content verification fails:
 ## Contributing
 
 Contributions to TinyMCE Typer are welcome! To contribute:
-
-1. Fork the repository
-
-2. Create a feature branch
-
-   ```bash
-   git checkout -b feature/amazing-feature
-   ```
-
-3. Commit your changes
-
-   ```bash
-   git commit -m 'Add amazing feature
-   ```
-
-4. Push to the branch
-
-   ```bash
-   git push origin feature/amazing-feature
-   ```
-
-5. Open a Pull Request
 
 _Please ensure your code follows the project's style guidelines and includes appropriate tests._
 
