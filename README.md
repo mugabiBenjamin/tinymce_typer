@@ -133,7 +133,7 @@ When inserting HTML content into an editor and preserving formatting:
 
 ### Environment Setup
 
-For proper module resolution, create a `.env` file in your project root:
+- For proper module resolution, create a `.env` file in your project root:
 
 ```bash
 # Replace with your project path
@@ -142,7 +142,7 @@ echo "PYTHONPATH=/home/username/path/to/selenium" > .env
 
 ### IDE Configuration (VS Code)
 
-Create a `pyrightconfig.json` file for better code intelligence:
+- Create a `pyrightconfig.json` file for better code intelligence:
 
 ```json
 {
@@ -222,7 +222,7 @@ For sites requiring login:
 3. Run TinyMCE Typer with existing session:
 
    ```bash
-   python tinymce_typer.py "https://example.com/editor" "content.txt" --use-existing --debugging-port 9222
+   python scripts/tinymce_typer.py "https://example.com/editor" "content.txt" --use-existing --debugging-port 9222
    ```
 
 ### Resumable Content Insertion
@@ -231,10 +231,10 @@ For sites requiring login:
 
    ```bash
    # Initial run
-   python tinymce_typer.py https://example.com/editor large_content.txt --batch
+   python scripts/tinymce_typer.py https://example.com/editor large_content.txt --batch
    
    # If interrupted, resume later
-   python tinymce_typer.py https://example.com/editor large_content.txt --batch
+   python scripts/tinymce_typer.py https://example.com/editor large_content.txt --batch
    # (The script will detect the previous session and offer to resume)
    ```
 
@@ -407,7 +407,7 @@ If using `--use-existing` with Chrome:
 If using Firefox:
 
    ```bash
-   python tinymce_typer.py https://example.com/editor content.txt --browser firefox --use-existing --marionette-port 2828
+   python scripts/tinymce_typer.py "https://example.com/editor" "content.txt" --browser firefox --use-existing --marionette-port 2828
    ```
 
 ### Content Not Inserted Correctly
@@ -439,13 +439,13 @@ For the best balance of speed and reliability:
 1. Use batch mode for large documents:
 
    ```bash
-   python tinymce_typer.py https://example.com/editor large_doc.txt --batch
+   python scripts/tinymce_typer.py "https://example.com/editor" "large_doc.txt" --batch
    ```
 
 2. Adjust batch parameters for your specific environment:
 
    ```bash
-   python tinymce_typer.py https://example.com/editor large_doc.txt --batch --batch-size 75 --batch-delay 0.15
+   python scripts/tinymce_typer.py "https://example.com/editor" "large_doc.txt" --batch --batch-size 75 --batch-delay 0.15
    ```
 
 3. Try clipboard insertion first (enabled by default), disable with `--no-clipboard` only if issues occur
