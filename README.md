@@ -19,7 +19,6 @@ TinyMCE Typer is a Python automation tool designed to assist with typing content
 - [Project Structure](#project-structure)
 - [Security](#security)
 - [Troubleshooting](#troubleshooting)
-- [Performance Optimization](#performance-optimization)
 - [Notes](#notes)
 - [Contributing](#contributing)
 - [License](#license)
