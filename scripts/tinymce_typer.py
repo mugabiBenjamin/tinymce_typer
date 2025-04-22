@@ -411,8 +411,8 @@ class TinyMCETyper:
 
     def try_clipboard_paste(self, editor):
         """
-        Attempt to paste content using clipboard methods.
-        Tries both Ctrl+V and Shift+Insert methods.
+        Attempt to paste content using clipboard methods while preserving whitespace.
+        Tries both direct HTML insertion and Ctrl+V methods.
         
         Args:
             editor: The editor WebElement to paste into
@@ -421,80 +421,59 @@ class TinyMCETyper:
             bool: True if clipboard paste was successful, False otherwise
         """
         try:
-            print("Attempting clipboard paste methods...")
+            print("Attempting clipboard paste with whitespace preservation...")
             # Save original clipboard content to restore later
             original_clipboard = pyperclip.paste()
             
-            # Try with a small test first to check if pasting works
-            test_text = "Test paste functionality"
-            pyperclip.copy(test_text)
+            # Format content with HTML to preserve whitespace
+            formatted_content = self.content.replace('\n', '<br>').replace('  ', '&nbsp;&nbsp;')
             
-            # Method 1: Try Ctrl+V paste
-            print("Trying Ctrl+V paste method...")
+            # Method 1: Try direct HTML insertion (most reliable for whitespace)
+            print("Trying direct HTML insertion...")
+            self.driver.execute_script("arguments[0].innerHTML = arguments[1];", editor, formatted_content)
+            
+            # Verify if content was inserted correctly
+            time.sleep(0.5)
+            editor_content = self.driver.execute_script("return arguments[0].innerHTML;", editor)
+            if editor_content and len(editor_content) > 10:  # Basic check that something was inserted
+                print("Direct HTML insertion successful!")
+                return True
+                
+            # Method 2: Try Ctrl+V paste with formatted HTML
+            print("Direct insertion failed. Trying Ctrl+V with HTML content...")
+            editor.clear()
+            pyperclip.copy(formatted_content)  # Copy the formatted content
             editor.send_keys(Keys.CONTROL, 'v')
             time.sleep(1)
             
-            # Check if paste worked by examining editor content
+            # Check if paste worked
             editor_content = self.driver.execute_script("return arguments[0].innerHTML;", editor)
-            ctrl_v_success = test_text in editor_content
-            
-            # Method 2: If Ctrl+V failed, try Shift+Insert
-            if not ctrl_v_success:
-                print("Ctrl+V paste failed. Trying Shift+Insert method...")
-                editor.clear()  # Clear any partial content
-                pyperclip.copy(test_text)  # Ensure test text is in clipboard
-                
-                try:
-                    # Try Shift+Insert paste
-                    editor.send_keys(Keys.SHIFT, Keys.INSERT)
-                    time.sleep(1)
-                    
-                    # Check if this method worked
-                    editor_content = self.driver.execute_script("return arguments[0].innerHTML;", editor)
-                    shift_insert_success = test_text in editor_content
-                    
-                    if shift_insert_success:
-                        print("Shift+Insert paste works! Using this paste method...")
-                    else:
-                        print("Shift+Insert paste also failed.")
-                except Exception as e:
-                    print(f"Error with Shift+Insert method: {e}")
-                    shift_insert_success = False
-            else:
-                # Ctrl+V worked, no need to try Shift+Insert
-                shift_insert_success = False
-                
-            # If either method worked, use it for the full content
-            if ctrl_v_success or shift_insert_success:
-                paste_method = Keys.CONTROL + 'v' if ctrl_v_success else (Keys.SHIFT, Keys.INSERT)
-                editor.clear()
-                
-                # Split content into chunks to avoid clipboard limitations
-                chunk_size = 5000
-                chunks = [self.content[i:i+chunk_size] for i in range(0, len(self.content), chunk_size)]
-                
-                # Paste each chunk separately
-                for i, chunk in enumerate(chunks):
-                    pyperclip.copy(chunk)
-                    
-                    # Use the method that worked in our test
-                    if ctrl_v_success:
-                        editor.send_keys(Keys.CONTROL, 'v')
-                    else:
-                        editor.send_keys(Keys.SHIFT, Keys.INSERT)
-                        
-                    time.sleep(0.5)
-                    print(f"Pasted chunk {i+1}/{len(chunks)}")
-                
-                # Restore original clipboard content
-                pyperclip.copy(original_clipboard)
+            if editor_content and len(editor_content) > 10:
+                print("Ctrl+V paste with formatted HTML successful!")
                 return True
-            else:
-                print("All clipboard paste methods failed. Falling back to character typing.")
-                editor.clear()
-                # Restore original clipboard
-                pyperclip.copy(original_clipboard)
-                return False
+                
+            # Method 3: Try with plain text
+            print("HTML methods failed. Trying with plain text...")
+            editor.clear()
+            pyperclip.copy(self.content)  # Copy original content
+            editor.send_keys(Keys.CONTROL, 'v')
+            time.sleep(1)
+            
+            # Check if this method worked
+            editor_content = self.driver.execute_script("return arguments[0].innerHTML;", editor)
+            if editor_content and len(editor_content) > 10:
+                print("Plain text paste successful!")
+                # Now format the content for whitespace
+                formatted_content = editor_content.replace('\n', '<br>').replace('  ', '&nbsp;&nbsp;')
+                self.driver.execute_script("arguments[0].innerHTML = arguments[1];", editor, formatted_content)
+                return True
+                
+            # All paste methods failed
+            print("All clipboard paste methods failed. Falling back to character typing.")
+            editor.clear()
+            # Restore original clipboard
+            pyperclip.copy(original_clipboard)
+            return False
                 
         except Exception as e:
             print(f"Error with clipboard methods: {e}")
@@ -507,7 +486,7 @@ class TinyMCETyper:
 
     def type_formatted_content(self, editor, content):
         """
-        Type content while preserving HTML formatting.
+        Type content while preserving HTML formatting and whitespace.
         Uses direct innerHTML setting if HTML tags are detected.
         
         Args:
@@ -525,8 +504,14 @@ class TinyMCETyper:
                 self.driver.execute_script("arguments[0].innerHTML = arguments[1];", editor, content)
                 return True
             else:
-                # Not formatted or simple formatting, use regular typing method
-                return self.type_content(editor, content)
+                # For non-HTML content, preserve whitespace by converting to HTML format
+                print("Preserving whitespace and line breaks in plain text content...")
+                # Replace newlines with <br> tags and preserve spaces
+                formatted_content = content.replace('\n', '<br>').replace('  ', '&nbsp;&nbsp;')
+                
+                # Use JavaScript to set innerHTML directly with whitespace preserved
+                self.driver.execute_script("arguments[0].innerHTML = arguments[1];", editor, formatted_content)
+                return True
         except Exception as e:
             print(f"Error while handling formatted content: {e}")
             return False
@@ -557,9 +542,11 @@ class TinyMCETyper:
                 # Get remaining text to type
                 remaining_text = content[start_pos:]
                 
-                # Set existing text directly using JavaScript
+                # Set existing text directly using JavaScript with whitespace preservation
                 if len(existing_text) > 0:
-                    self.driver.execute_script(f"arguments[0].innerHTML = '{existing_text}';", editor)
+                    # Replace newlines with <br> tags to preserve line breaks
+                    formatted_existing = existing_text.replace('\n', '<br>').replace('  ', '&nbsp;&nbsp;')
+                    self.driver.execute_script(f"arguments[0].innerHTML = arguments[1];", editor, formatted_existing)
                     
                 content = remaining_text
             else:
@@ -569,17 +556,27 @@ class TinyMCETyper:
             # Record start time for progress estimation
             self.start_time = time.time()
             
-            # Type the content character by character
+            # Type the content character by character with special handling for whitespace
             total_chars = len(content)
+            current_html = ""
+            
             for i, char in enumerate(content):
                 current_pos = start_pos + i
                 
-                # Escape special characters for JavaScript
-                escaped_char = char.replace("'", "\\'").replace("\n", "\\n").replace("\r", "\\r")
+                # Special handling for whitespace characters
+                if char == '\n':
+                    # Add a line break for newlines
+                    current_html += '<br>'
+                elif char == ' ' and content[i-1:i] == ' ':
+                    # Use non-breaking space for consecutive spaces
+                    current_html += '&nbsp;'
+                else:
+                    # Escape special characters for JavaScript
+                    escaped_char = char.replace("'", "\\'").replace('"', '\\"')
+                    current_html += escaped_char
                 
-                # Use JavaScript to insert the character (more reliable than send_keys for some editors)
-                script = f"arguments[0].innerHTML = arguments[0].innerHTML + '{escaped_char}';"
-                self.driver.execute_script(script, editor)
+                # Update the editor's content
+                self.driver.execute_script(f"arguments[0].innerHTML = arguments[1];", editor, current_html)
                 
                 # Save progress periodically (every 100 characters)
                 if current_pos % 100 == 0:
@@ -605,7 +602,7 @@ class TinyMCETyper:
             return False
 
     def type_content_batched(self, editor, content):
-        """Type content in small batches for better performance.
+        """Type content in small batches for better performance while preserving whitespace.
         
         Args:
             editor: The editor element
@@ -630,7 +627,9 @@ class TinyMCETyper:
                 existing_text = content[:start_pos]
                 remaining_text = content[start_pos:]
                 if len(existing_text) > 0:
-                    self.driver.execute_script(f"arguments[0].innerHTML = arguments[1];", editor, existing_text)
+                    # Format existing text with whitespace preservation
+                    formatted_existing = existing_text.replace('\n', '<br>').replace('  ', '&nbsp;&nbsp;')
+                    self.driver.execute_script(f"arguments[0].innerHTML = arguments[1];", editor, formatted_existing)
                 content = remaining_text
             else:
                 editor.clear()
@@ -638,20 +637,30 @@ class TinyMCETyper:
             # Record start time for progress estimation
             self.start_time = time.time()
             
-            # Type the content in batches
+            # Process and type the content in batches with whitespace preservation
             total_chars = len(content)
+            current_html = self.driver.execute_script("return arguments[0].innerHTML;", editor) or ""
             
             for i in range(0, total_chars, batch_size):
                 current_pos = start_pos + i
                 end_pos = min(i + batch_size, total_chars)
                 batch = content[i:end_pos]
                 
-                # Escape special characters
-                escaped_batch = batch.replace("'", "\\'").replace("\n", "\\n").replace("\r", "\\r")
+                # Format the batch with whitespace preservation
+                formatted_batch = ""
+                for char in batch:
+                    if char == '\n':
+                        formatted_batch += '<br>'
+                    elif char == ' ' and formatted_batch.endswith(' '):
+                        formatted_batch += '&nbsp;'
+                    else:
+                        formatted_batch += char
                 
-                # Insert the batch
-                script = f"arguments[0].innerHTML += '{escaped_batch}';"
-                self.driver.execute_script(script, editor)
+                # Update current HTML content
+                current_html += formatted_batch
+                
+                # Insert the formatted batch
+                self.driver.execute_script("arguments[0].innerHTML = arguments[1];", editor, current_html)
                 
                 # Save progress periodically
                 self.progress = current_pos + (end_pos - i)
