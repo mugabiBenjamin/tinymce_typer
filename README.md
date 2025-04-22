@@ -213,7 +213,14 @@ For sites requiring login:
 1. Start Chrome with remote debugging:
 
    ```bash
+   # Starting Chrome with Debugging Port on windows
    chrome.exe --remote-debugging-port=9222
+
+   # Starting Chrome with Debugging Port on macOS
+   /Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --remote-debugging-port=9222
+
+   # Starting Chrome with Debugging Port on Linux
+   google-chrome --remote-debugging-port=9222
    ```
 
 2. Manually log in to the website
