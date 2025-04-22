@@ -467,7 +467,7 @@ _Please ensure your code follows the project's style guidelines and includes app
 
 ## License
 
-This project is licensed under the terms of the license included in the repository. See the [LICENSE](LICENSE) file for details.
+This project is licensed under the terms of the license included in the repository. See the [MIT License](./LICENSE) file for details.
 
 ## Feedback
 
