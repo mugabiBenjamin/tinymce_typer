@@ -7,5 +7,5 @@
     ],
     "typeCheckingMode": "off",
     "useLibraryCodeForTypes": true,
-    "python.envFile": "${/home/benjn/Desktop/selenium}/.env"
+    "python.envFile": "${/home/benjn/Desktop/tinymce_typer}/.env"
 }
