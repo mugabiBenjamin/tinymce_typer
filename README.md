@@ -97,16 +97,35 @@ cd tinymce-typer
 pip3 install -r requirements.txt
 ```
 
+## Supported File Types
+
+TinyMCE Typer works with various text-based file formats:
+
+- **Plain text files** (`.txt`): Standard text without formatting
+- **Markdown files** (`.md`, `.markdown`): Preserves Markdown syntax
+- **HTML files** (`.html`, `.htm`): Can preserve HTML formatting when used with `--formatted` flag
+- **Rich Text Format** (`.rtf`): Basic support (text content only)
+- **XML files** (`.xml`): Text content is preserved
+- **JavaScript/CSS/Code files** (`.js`, `.css`, `.py`, etc.): Code can be inserted as-is
+- **CSV/TSV files** (`.csv`, `.tsv`): Will preserve structure but may not format as tables
+- **JSON files** (`.json`): Content will be inserted as raw text
+
+When inserting HTML content into an editor and preserving formatting:
+
+1. Use the `--formatted` flag
+2. Ensure your HTML file uses tags compatible with the editor
+3. Consider using multiple files with `--files` if you need to insert different sections with varied formatting
+
 ## Usage
 
 ### Basic Usage
 
 ```bash
 # Windows
-python tinymce_typer.py https://example.com/page-with-editor your_content_file.txt
+python scripts/tinymce_typer.py https://example.com/page-with-editor your_content_file.txt
 
 # macOS/Linux
-python3 tinymce_typer.py https://example.com/page-with-editor your_content_file.txt
+python3 scripts/tinymce_typer.py https://example.com/page-with-editor your_content_file.txt
 ```
 
 ### Examples
@@ -114,35 +133,35 @@ python3 tinymce_typer.py https://example.com/page-with-editor your_content_file.
 1. **Basic usage with Chrome (default)**:
 
    ```bash
-   python3 tinymce_typer.py https://example.com/page-with-editor content.txt
+   python3 scripts/tinymce_typer.py https://example.com/page-with-editor content.txt
    ```
 
 2. **Use Firefox instead of Chrome**:
 
    ```bash
-   python3 tinymce_typer.py https://example.com/page-with-editor content.txt --browser firefox
+   python3 scripts/tinymce_typer.py https://example.com/page-with-editor content.txt --browser firefox
    ```
 
 3. **Specify TinyMCE iframe ID (if known)**:
 
    ```bash
-   python3 tinymce_typer.py https://example.com/page-with-editor content.txt --iframe-id tinymce_ifr
+   python3 scripts/tinymce_typer.py https://example.com/page-with-editor content.txt --iframe-id tinymce_ifr
    ```
 
 4. **Use browser profile for authenticated sessions**:
 
    ```bash
    # Windows Chrome
-   python tinymce_typer.py https://example.com/page-with-editor content.txt --profile "C:\Users\YourUsername\AppData\Local\Google\Chrome\User Data\Default"
+   python scripts/tinymce_typer.py https://example.com/page-with-editor content.txt --profile "C:\Users\YourUsername\AppData\Local\Google\Chrome\User Data\Default"
 
    # macOS Chrome
-   python3 tinymce_typer.py https://example.com/page-with-editor content.txt --profile "/Users/YourUsername/Library/Application Support/Google/Chrome/Default"
+   python3 scripts/tinymce_typer.py https://example.com/page-with-editor content.txt --profile "/Users/YourUsername/Library/Application Support/Google/Chrome/Default"
 
    # Linux Chrome
-   python3 tinymce_typer.py https://example.com/page-with-editor content.txt --profile "/home/yourusername/.config/google-chrome/Default"
+   python3 scripts/tinymce_typer.py https://example.com/page-with-editor content.txt --profile "/home/yourusername/.config/google-chrome/Default"
 
    # Firefox (all platforms)
-   python3 tinymce_typer.py https://example.com/page-with-editor content.txt --browser firefox --profile "/path/to/firefox/profile"
+   python3 scripts/tinymce_typer.py https://example.com/page-with-editor content.txt --browser firefox --profile "/path/to/firefox/profile"
    ```
 
 5. **Connect to existing browser (advanced)**:
@@ -155,7 +174,7 @@ python3 tinymce_typer.py https://example.com/page-with-editor your_content_file.
    google-chrome --remote-debugging-port=9222
 
    # Then connect the script
-   python3 tinymce_typer.py https://example.com/page-with-editor content.txt --use-existing --debugging-port=9222
+   python3 scripts/tinymce_typer.py https://example.com/page-with-editor content.txt --use-existing --debugging-port=9222
    ```
 
 ### Command Line Options
@@ -236,6 +255,129 @@ python3 tinymce_typer.py https://example.com/page-with-editor your_content_file.
                         # Separator to use between content from multiple files (default: \n\n)
 ```
 
+## Advanced Features
+
+### Using Encrypted Sessions
+
+- To enable encryption for session data (requires the `cryptography` package):
+
+  ```bash
+  python3 scripts/tinymce_typer.py https://example.com content.txt --encrypt
+  ```
+
+You'll be prompted for a password to encrypt the session data.
+
+### Content Verification
+
+- By default, the script verifies the typed content matches the source file. Disable with:
+
+  ```bash
+  python3 scripts/tinymce_typer.py https://example.com content.txt --no-verification
+  ```
+
+### Performance Optimization
+
+- For large content files, use batch mode for better performance:
+
+  ```bash
+  python3 scripts/tinymce_typer.py https://example.com content.txt --batch --batch-size 100 --batch-delay 0.05
+  ```
+
+### Resumable Content Insertion
+
+- TinyMCE Typer automatically saves session progress and can resume from where it left off:
+
+  ```bash
+  # Initial run that gets interrupted
+  python scripts/tinymce_typer.py https://example.com/editor large_content.txt --batch
+
+  # Resume later (the script detects the previous session)
+  python scripts/tinymce_typer.py https://example.com/editor large_content.txt
+
+  # Force restart from beginning
+  python scripts/tinymce_typer.py https://example.com/editor large_content.txt --reset
+  ```
+
+- For encrypted sessions, you'll need to provide the same password to resume:
+
+  ```bash
+  python scripts/tinymce_typer.py https://example.com/editor large_content.txt --encrypt
+  ```
+
+## Configuration
+
+### Environment Setup
+
+- For proper module resolution, create a `.env` file in your project root:
+
+  ```bash
+  # Windows
+  echo PYTHONPATH=%CD% > .env
+
+  # macOS/Linux
+  echo "PYTHONPATH=$(pwd)" > .env
+  ```
+
+### IDE Configuration (VS Code)
+
+- Create a `pyrightconfig.json` file for better code intelligence:
+
+  ```bash
+  {
+    "venvPath": ".",
+    "venv": "tinymce_venv",
+    "pythonVersion": "3.12",
+    "extraPaths": ["./tinymce_venv/lib/python3.12/site-packages"],
+    "typeCheckingMode": "off",
+    "useLibraryCodeForTypes": true,
+    "python.envFile": "${workspaceFolder}/.env"
+  }
+  ```
+
+## Usage Workflow
+
+1. **Preparation:**
+
+   - Prepare your content file(s)
+   - Identify the URL with the rich text editor
+   - Determine if you need any special options (browser profiles, formatting, etc.)
+
+2. **Execution:**
+
+   - The script launches or connects to a browser and navigates to the specified URL
+   - It locates the rich text editor on the page (prompting for selection if multiple editors are found)
+   - Content insertion begins using the preferred method (clipboard pasting first, typing methods as fallback)
+   - Real-time progress is displayed with typing speed and estimated time remaining
+
+3. **Verification and Completion:**
+
+   - After typing completes, content verification checks if the text was inserted correctly
+   - The browser remains open for you to review and submit the form
+   - Session information is saved for potential resumption later
+
+4. **Resumption (if needed):**
+
+   - If interrupted, run the same command again to resume from where you left off
+   - For encrypted sessions, provide the same password when prompted
+
+## Project Structure
+
+The project is organized as follows:
+
+```plaintext
+tinymce_typer/
+├── scripts/
+│   └── tinymce_typer.py   # Main script
+├── content.md             # Sample content file
+├── README.md              # Project documentation
+├── SETUP.md               # Additional setup instructions
+├── requirements.txt       # Python dependencies
+├── LICENSE                # License information
+├── pyrightconfig.json     # Python language server configuration
+├── .env                   # Environment variables
+└── tinymce_venv/          # Virtual environment (not tracked in git)
+```
+
 ## Troubleshooting
 
 ### Browser Driver Issues
@@ -268,166 +410,38 @@ The latest version includes enhanced whitespace preservation. If you still exper
 1. Use the `--formatted` flag to enable HTML formatting preservation
 2. For complex formatting, consider using HTML formatting in your source file
 
-### Linux-Specific Issues
+### Platform Specific Issues
 
-1. **Clipboard functionality**:
+#### On Windows
 
-   - Ensure `xclip` is installed: `sudo apt install xclip`
-   - For Wayland users, install `wl-clipboard`: `sudo apt install wl-clipboard`
+- If Python is not in your PATH, use the full path to the Python executable
+- For browser profile paths with spaces, enclose the path in quotes
 
-2. **Browser path issues**:
-   - Chrome: If Chrome isn't found, specify the binary location in the script
-   - Firefox: If Firefox isn't found, specify the binary location in the script
+#### On macOS
 
-## Advanced Features
+- If using Homebrew Python, you may need to use python3 explicitly
+- For application permissions, you might need to grant accessibility permissions
 
-### Using Encrypted Sessions
+#### On Linux
 
-To enable encryption for session data (requires the `cryptography` package):
-
-```bash
-python3 tinymce_typer.py https://example.com content.txt --encrypt
-```
-
-You'll be prompted for a password to encrypt the session data.
-
-### Content Verification
-
-By default, the script verifies the typed content matches the source file. Disable with:
-
-```bash
-python3 tinymce_typer.py https://example.com content.txt --no-verification
-```
-
-### Performance Optimization
-
-For large content files, use batch mode for better performance:
-
-```bash
-python3 tinymce_typer.py https://example.com content.txt --batch --batch-size 100 --batch-delay 0.05
-```
-
-## Recent Improvements
-
-### Whitespace Preservation Enhancement
-
-The latest version includes significant improvements to whitespace handling:
-
-- Properly preserves line breaks and indentation from source files
-- Maintains consecutive spaces and tabs
-- Works across different rich text editor implementations
-- Implemented in all typing methods (character-by-character, batched, clipboard)
-
-## Supported File Types
-
-TinyMCE Typer works with various text-based file formats:
-
-- **Plain text files** (`.txt`): Standard text without formatting
-- **Markdown files** (`.md`, `.markdown`): Preserves Markdown syntax
-- **HTML files** (`.html`, `.htm`): Can preserve HTML formatting when used with `--formatted` flag
-- **Rich Text Format** (`.rtf`): Basic support (text content only)
-- **XML files** (`.xml`): Text content is preserved
-- **JavaScript/CSS/Code files** (`.js`, `.css`, `.py`, etc.): Code can be inserted as-is
-- **CSV/TSV files** (`.csv`, `.tsv`): Will preserve structure but may not format as tables
-- **JSON files** (`.json`): Content will be inserted as raw text
-
-When inserting HTML content into an editor and preserving formatting:
-
-1. Use the `--formatted` flag
-2. Ensure your HTML file uses tags compatible with the editor
-3. Consider using multiple files with `--files` if you need to insert different sections with varied formatting
-
-## Configuration
-
-### Environment Setup
-
-- For proper module resolution, create a `.env` file in your project root:
-
-```bash
-# Replace with your project path
-echo "PYTHONPATH=/home/username/path/to/selenium" > .env
-```
-
-### IDE Configuration (VS Code)
-
-- Create a `pyrightconfig.json` file for better code intelligence:
-
-```json
-{
-  "venvPath": ".",
-  "venv": "tinymce_venv",
-  "pythonVersion": "3.12",
-  "extraPaths": ["./tinymce_venv/lib/python3.12/site-packages"],
-  "typeCheckingMode": "off",
-  "useLibraryCodeForTypes": true,
-  "python.envFile": "${workspaceFolder}/.env"
-}
-```
-
-### Resumable Content Insertion
-
-- For very large content that might need to be resumed:
-
-  ```bash
-  # Initial run
-  python scripts/tinymce_typer.py https://example.com/editor large_content.txt --batch
-
-  # If interrupted, resume later
-  python scripts/tinymce_typer.py https://example.com/editor large_content.txt --batch
-  # (The script will detect the previous session and offer to resume)
-  ```
-
-### Content Verification for Critical Applications
-
-- When accuracy is crucial:
-
-  ```bash
-  python tinymce_typer.py https://example.com/editor important_content.txt --type-delay 0.05
-  # (Default verification will run, or explicitly use --no-verification to disable)
-  ```
-
-### Usage Workflow
-
-1. The script will launch or connect to a browser and navigate to the specified URL
-2. It will attempt to locate the rich text editor on the page
-3. If multiple editors are found, you may be prompted to select one
-4. The script will try different methods to insert the content:
-   - First, it attempts `clipboard pasting` (if not disabled)
-   - If pasting fails, it falls back to `typing methods`
-5. Progress is displayed in real-time with speed and ETA
-6. After typing completes, content verification checks if the text was inserted correctly
-7. The browser remains open for you to review and submit the form
-
-## Project Structure
-
-The project is organized as follows:
-
-```plaintext
-tinymce_typer/
-├── scripts/
-│   └── tinymce_typer.py   # Main script
-├── content.md             # Sample content file
-├── README.md              # Project documentation
-├── SETUP.md               # Additional setup instructions
-├── requirements.txt       # Python dependencies
-├── LICENSE                # License information
-├── pyrightconfig.json     # Python language server configuration
-├── .env                   # Environment variables
-└── tinymce_venv/          # Virtual environment (not tracked in git)
-```
+- Ensure `xclip` is installed: `sudo apt install xclip`
+- For Wayland users, install `wl-clipboard`: `sudo apt install wl-clipboard`
 
 ## Notes
 
-- **Performance Considerations**: For very large files (>1MB), consider using batch mode (`--batch`) with a larger batch size for better performance.
-- **Browser Memory**: Chrome typically handles larger content better than Firefox, though this may vary depending on your system.
-- **Website Limitations**: Some websites may have anti-automation measures that could affect typing or pasting operations.
-- **Session Files**: The session file (`tinymce_session.json`) is created in the same directory where the script is run. These files are small but may contain sensitive information if encryption is not used.
-- **System Resources**: When running with large files, ensure your system has sufficient memory available, especially if using batch mode with large batch sizes.
-- **Testing**: It's recommended to test with small content samples before attempting to insert large documents, particularly when using a new website or editor configuration.
+- **Performance Considerations:** For very large files (>1MB), use batch mode with a larger batch size.
+- **Browser Memory:** Chrome typically handles larger content better than Firefox.
+- **Website Limitations:** Some websites may have anti-automation measures affecting typing or pasting.
+- **Session Files:** Session data is stored in `tinymce_session.json` in the script directory.
+- **System Resources:** Ensure sufficient memory when working with large files, especially in batch mode.
+- **Testing:** Test with small content samples before attempting large documents.
+- **Authentication:** For sites requiring login, use `--profile` or `--use-existing` options.
+- **Cross-platform:** Path formats differ between operating systems; use appropriate path syntax.
+- **File Encoding:** Input files are read using UTF-8 encoding by default.
 
 ## Contributing
 
-Contributions to TinyMCE Typer are welcome! To contribute:
+- Contributions to TinyMCE Typer are welcome!
 
 ## License
 
