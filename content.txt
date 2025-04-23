@@ -1,0 +1,209 @@
+# DSA
+
+- [Brocode](#brocode)
+
+## Brocode
+
+1. (00:00:00) What are data structures and algorithms?
+2. (00:02:20) Stacks
+3. (00:11:45) Queues
+4. (00:21:51) Priority Queues
+5. (00:26:51) Linked Lists
+6. (00:40:14) Dynamic Arrays
+7. (01:04:37) LinkedLists vs ArrayLists
+8. (01:13:07) Big O notation
+9. (01:19:32) Linear search
+10. (01:23:13) Binary search
+11. (01:32:44) Interpolation search
+12. (01:41:05) Bubble sort
+13. (01:48:14) Selection sort
+14. (01:56:35) Insertion sort
+15. (02:03:40) Recursion
+16. (02:11:58) Merge sort
+17. (02:25:07) Quick sort
+18. (02:38:57) Hash Tables
+19. (02:52:21) Graphs intro
+20. (02:57:39) Adjacency matrix
+21. (03:07:30) Adjacency list
+22. (03:15:59) Depth First Search
+23. (03:23:40) Breadth First Search
+24. (03:30:20) Tree data structure intro
+25. (03:33:14) Binary search tree
+26. (03:53:38) Tree traversal
+27. (03:57:35) Calculate execution time
+
+[Back to top](#dsa)
+
+.
+├── content.md
+├── LICENSE
+├── pyrightconfig.json
+├── README.md
+├── requirements.txt
+├── scripts
+│   └── tinymce_typer.py
+├── SETUP.md
+└── tinymce_venv
+├── bin
+├── include
+├── lib
+├── lib64 -> lib
+└── pyvenv.cfg
+
+7 directories, 8 files
+
+Create a comprehensive README.md file for uploaded tinymce_typer.py file, including the following sections: Project Title, Description, Table of Contents, Features, Configuration, Prerequisites and with links to where the prequisites can be downloaded, Supported files, Installation Instructions, Usage Instructions, Contributing Guidelines, Analyze the files to extract relevant information and ensure the README adheres to industry standards and best practices for clarity and usability. Use appropriate Markdown formatting and provide the complete content clearly and professionally. the github repo url is https://github.com/mugabiBenjamin/tinymce_typer.git Include all the its features, clear instructions to install dependencies
+├── content.md
+├── LICENSE
+├── pyrightconfig.json
+├── README.md
+├── requirements.txt
+├── scripts
+│   └── tinymce_typer.py
+├── SETUP.md
+└── tinymce_venv
+├── bin
+├── include
+├── lib
+├── lib64 -> lib
+└── pyvenv.cfg
+pyrightconfig.json
+"python.envFile": "${/home/benjn/Desktop/selenium}/.env"
+.env
+PYTHONPATH=/home/benjn/Desktop/selenium
+
+============================== Yet not I but through Christ in me (English)
+
+What gift of grace is Jesus, my Redeemer
+There is no more for Heaven now to give
+He is my joy, my righteousness, and freedom
+My steadfast love, my deep and boundless peace
+
+To this I hold, my hope is only Jesus
+For my life is wholly bound to His
+Oh, how strange and divine, I can sing, "All is mine"
+Yet not I, but through Christ in me
+
+The night is dark, but I am not forsaken
+For by my side, the Savior, He will stay
+I labor on in weakness and rejoicing
+For in my need, His power is displayed
+
+To this I hold, my Shepherd will defend me
+Through the deepest valley, He will lead
+Oh, the night has been won, and I shall overcome
+Yet not I, but through Christ in me
+
+No fate I dread, I know I am forgiven
+The future's sure, the price, it has been paid
+For Jesus bled and suffered for my pardon
+And He was raised to overthrow the grave
+
+To this I hold, my sin has been defeated
+Jesus, now and ever is my plea
+Oh, the chains are released, I can sing, "I am free"
+Yet not I, but through Christ in me
+
+With every breath, I long to follow Jesus
+For He has said that He will bring me home
+And day by day, I know He will renew me
+Until I stand with joy before the throne
+
+To this I hold, my hope is only Jesus
+All the glory evermore to Him
+When the race is complete, still my lips shall repeat
+"Yet not I, but through Christ in me"
+
+To this I hold, my hope is only Jesus
+All the glory evermore to Him
+When the race is complete, still my lips shall repeat
+"Yet not I, but through Christ in me"
+
+When the race is complete, still my lips shall repeat
+"Yet not I, but through Christ in me"
+Yet not I, but through Christ in me
+Yet not I, but through Christ in me
+
+# Bash
+
+## Introduction to Bash Scripting
+
+- `#!/bin/bash` on its own line. This tells the computer which type of interpreter to use for the script. When saving the script file, it is good practice to place commonly used scripts in the `~/bin/` directory.
+
+- The script files also need to have the `“execute”` permission to allow them to be run. To add this permission to a file with filename: script.sh use: `chmod +x script.sh`
+
+- Your terminal runs a file every time it is opened to load its configuration. On Linux style shells, this is `~/.bashrc` and on OSX, this is `~/.bash_profile`. To ensure that scripts in `~/bin/` are available, you must add this directory to your `PATH` within your configuration file: `PATH=$PATH:~/bin/`. Now any scripts in the `~/bin` directory can be run from anywhere by typing the filename.
+
+```bash
+#!/bin/bash
+
+echo "Hello Codecademy!"
+```
+
+## Variables
+
+```bash
+#!/bin/bash
+
+greeting="Hello"
+echo $greeting
+
+# ./script.sh to run
+```
+
+## Conditionals
+
+```bash
+if [ $index -lt 5 ]
+then
+  echo $index
+else
+  echo 5
+fi
+```
+
+Bash scripts use a specific list of operators for comparison. Here we used `-lt` which is “less than”. The result of this conditional is that if `$index` is less than 5, it will print to the screen. If it is 5 or greater, “5” will be printed to the screen.
+
+**Here is the list of comparison operators for numbers you can use within bash scripts:**
+
+- Equal: `-eq`
+- Not equal: `-ne`
+- Less than or equal: `-le`
+- Less than: `-lt`
+- Greater than or equal: `-ge`
+- Greater than: `-gt`
+- Is null: `-z`
+
+When comparing strings, it is best practice to put the variable into quotes (`"`). This prevents errors if the variable is null or contains spaces. The common operators for comparing strings are:
+
+- Equal: `==`
+- Not equal: `!=`
+
+For example, to compare if the variables `foo` and `bar` contain the same string:
+
+```bash
+if [ "$foo" == "$bar" ]
+then
+  echo "foo is equal to bar"
+fi
+```
+
+## Arrays vs Linked Lists
+
+| Feature                                                                | Arrays | Linked Lists |
+| ---------------------------------------------------------------------- | ------ | ------------ |
+| **Existing data structure in the programming language**                | Yes    | No           |
+| **Fixed size in memory**                                               | Yes    | No           |
+| **Elements are stored contiguously in memory**                         | Yes    | No           |
+| **Memory usage is low (each node only contains data)**                 | Yes    | No           |
+| **Elements can be accessed directly (random access)**                  | Yes    | No           |
+| **Insertion/deletion in constant time, no shifting operations needed** | No     | Yes          |
+
+## Hash Sets vs Hash Maps
+
+| Feature                                                                                                                     | Hash Set                                                                          | Hash Map                                                                                 |
+| --------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| **Uniqueness and storage**                                                                                                  | Every element is a unique key.                                                    | Every entry is a key-value pair, with a key that is unique, and a value connected to it. |
+| **Use case**                                                                                                                | Checking if an element is in the set, like checking if a name is on a guest list. | Finding information based on a key, like looking up who owns a certain telephone number. |
+| **Is it fast to search, add and delete elements?**                                                                          | Yes, average O(1).                                                                | Yes, average O(1).                                                                       |
+| **Is there a hash function that takes the key, generates a hash code, and that is the bucket where the element is stored?** | Yes                                                                               | Yes                                                                                      |
