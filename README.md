@@ -11,13 +11,11 @@ TinyMCE Typer is a Python automation tool designed to assist with typing content
 
 - [Features](#features)
 - [Prerequisites](#prerequisites)
-- [Supported Editors](#supported-editors)
 - [Supported File Types](#supported-file-types)
 - [Installation](#installation)
 - [Configuration](#configuration)
 - [Usage](#usage)
 - [Project Structure](#project-structure)
-- [Security](#security)
 - [Troubleshooting](#troubleshooting)
 - [Notes](#notes)
 - [Contributing](#contributing)
@@ -27,45 +25,298 @@ TinyMCE Typer is a Python automation tool designed to assist with typing content
 
 ## Features
 
-- **Multiple Browser Support:** Works with both Chrome and Firefox browsers
-- **Existing Browser Connection:** Connect to already open browser instances
-- **Editor Detection:** Automatically detects TinyMCE and other rich text editors
-- **Multiple Editor Support:** Can identify and let you select from multiple editors on a page
-- **Insertion Methods:**
-  - Character-by-character typing with configurable delay
-  - Batch insertion for improved performance
-  - Clipboard-based pasting
-  - HTML-formatted content preservation
-- **Progress Tracking:**
-  - Real-time progress display
-  - Speed calculation (characters per second)
-  - Estimated time remaining
-- **Session Management:**
-  - Save and resume typing progress
-  - Optional session encryption for sensitive content
-- **Content Verification:** Confirms content was inserted correctly
-- **Multiple File Support:** Insert content from multiple files sequentially
-- **Browser Profile Support:** Use custom browser profiles
+- **Rich Text Editor Support**: Works with TinyMCE, CKEditor, Quill, and generic contenteditable elements
+- **Multiple Input Methods**: Character-by-character typing, batch insertion, and clipboard pasting
+- **Whitespace Preservation**: Maintains all whitespace, indentation, and line breaks from source files
+- **Progress Tracking**: Shows typing progress with speed and estimated time remaining
+- **Session Management**: Save and resume typing sessions with optional encryption
+- **Multi-Browser Support**: Works with Chrome and Firefox
+- **Multiple File Input**: Combine content from multiple files
+- **Browser Profile Support**: Use existing browser profiles for authentication
+- **Existing Browser Connection**: Connect to already running browser instances
 
-## Prerequisites
+## Installation
+
+### Prerequisites
 
 Before using TinyMCE Typer, ensure you have the following installed:
 
-- **Python 3.6+**: [Download Python](https://www.python.org/downloads/)
-- **Chrome** or **Firefox** browser:
-  - [Download Chrome](https://www.google.com/chrome/)
-  - [Download Firefox](https://www.mozilla.org/firefox/)
-- **WebDriver** for your selected browser (automatically handled by webdriver-manager)
-- **Required Python packages**: See the Installation section
+1. **Python 3.6+**: [Download Python](https://www.python.org/downloads/)
 
-## Supported Editors
+2. **Chrome** or **Firefox** browser:
 
-TinyMCE Typer can work with various rich text editors:
+   - [Download Chrome](https://www.google.com/chrome/)
+   - [Download Firefox](https://www.mozilla.org/firefox/)
 
-- **TinyMCE**: Primary supported editor (various versions)
-- **CKEditor**: Basic support for common implementations
-- **Quill Editor**: Basic support
-- **Generic contenteditable elements**: Any element with the contenteditable attribute
+3. **Required Python packages**
+
+   ```bash
+   # All platforms
+   pip install selenium webdriver-manager pyperclip
+
+   # Optional: For session encryption
+   pip install cryptography
+   ```
+
+### Platform-Specific Setup
+
+#### Windows
+
+```powershell
+# Clone repository (if using git)
+git clone https://github.com/mugabiBenjamin/tinymce_typer.git
+cd tinymce-typer
+
+# Install requirements
+pip install -r requirements.txt
+```
+
+#### macOS
+
+```bash
+# Clone repository (if using git)
+git clone https://github.com/mugabiBenjamin/tinymce_typer.git
+cd tinymce-typer
+
+# Install requirements
+pip install -r requirements.txt
+```
+
+#### Linux (Ubuntu/Debian)
+
+```bash
+# Install dependencies
+sudo apt update
+sudo apt install -y python3-pip xclip
+
+# Clone repository (if using git)
+git clone https://github.com/mugabiBenjamin/tinymce_typer.git
+cd tinymce-typer
+
+# Install requirements
+pip3 install -r requirements.txt
+```
+
+## Usage
+
+### Basic Usage
+
+```bash
+# Windows
+python tinymce_typer.py https://example.com/page-with-editor your_content_file.txt
+
+# macOS/Linux
+python3 tinymce_typer.py https://example.com/page-with-editor your_content_file.txt
+```
+
+### Examples
+
+1. **Basic usage with Chrome (default)**:
+
+   ```bash
+   python3 tinymce_typer.py https://example.com/page-with-editor content.txt
+   ```
+
+2. **Use Firefox instead of Chrome**:
+
+   ```bash
+   python3 tinymce_typer.py https://example.com/page-with-editor content.txt --browser firefox
+   ```
+
+3. **Specify TinyMCE iframe ID (if known)**:
+
+   ```bash
+   python3 tinymce_typer.py https://example.com/page-with-editor content.txt --iframe-id tinymce_ifr
+   ```
+
+4. **Use browser profile for authenticated sessions**:
+
+   ```bash
+   # Windows Chrome
+   python tinymce_typer.py https://example.com/page-with-editor content.txt --profile "C:\Users\YourUsername\AppData\Local\Google\Chrome\User Data\Default"
+
+   # macOS Chrome
+   python3 tinymce_typer.py https://example.com/page-with-editor content.txt --profile "/Users/YourUsername/Library/Application Support/Google/Chrome/Default"
+
+   # Linux Chrome
+   python3 tinymce_typer.py https://example.com/page-with-editor content.txt --profile "/home/yourusername/.config/google-chrome/Default"
+
+   # Firefox (all platforms)
+   python3 tinymce_typer.py https://example.com/page-with-editor content.txt --browser firefox --profile "/path/to/firefox/profile"
+   ```
+
+5. **Connect to existing browser (advanced)**:
+
+   ```bash
+   # Start Chrome with remote debugging (Windows)
+   start chrome --remote-debugging-port=9222
+
+   # Start Chrome with remote debugging (macOS/Linux)
+   google-chrome --remote-debugging-port=9222
+
+   # Then connect the script
+   python3 tinymce_typer.py https://example.com/page-with-editor content.txt --use-existing --debugging-port=9222
+   ```
+
+### Command Line Options
+
+#### Basic Options
+
+```bash
+# positional arguments:
+  url                   # URL of the page with TinyMCE editor
+  file                  # Path to the text file containing content to type
+
+# optional arguments:
+  -h, --help            # Show this help message and exit
+```
+
+#### Browser Options
+
+```bash
+  --browser {chrome,firefox}
+                        # Browser to use (default: chrome)
+  --profile PROFILE     # Path to browser profile directory
+```
+
+#### Editor Location Options
+
+```bash
+--iframe-id IFRAME_ID
+                        # ID of the iframe containing TinyMCE (if applicable)
+--editor-id EDITOR_ID
+                        # ID of the TinyMCE editor element (if known)
+--detect-multiple       # Detect and select from multiple TinyMCE editors
+```
+
+#### Content Insertion Options
+
+```bash
+  --type-delay TYPE_DELAY
+                        # Delay between keystrokes in seconds (default: 0.01)
+  --formatted           # Preserve HTML formatting in the content
+  --no-clipboard        # Disable clipboard paste attempt
+  --batch               # Use batch insertion for better performance
+  --batch-size BATCH_SIZE
+                        # Number of characters to insert at once (default: 50)
+  --batch-delay BATCH_DELAY
+                        # Delay between batch insertions in seconds (default: 0.1)
+```
+
+#### Session Handling Options
+
+```bash
+  --no-session          # Disable session saving/loading
+  --reset               # Reset progress from previous session
+  --encrypt             # Encrypt session data with a password
+```
+
+#### Content Verification Options
+
+```bash
+  --no-verification     # Disable content verification after typing
+```
+
+#### Existing Browser Support
+
+```bash
+  --use-existing        # Connect to an existing browser session instead of starting new one
+  --debugging-port DEBUGGING_PORT
+                        # Port for remote debugging (default: 9222, used with --use-existing)
+  --marionette-port MARIONETTE_PORT
+                        # Port for Firefox Marionette (used with --use-existing for Firefox)
+  --force-navigation    # Force navigation to URL even when using existing browser
+```
+
+#### Multi-file Support
+
+```bash
+  --files [FILES ...]   # Multiple content files to type sequentially
+  --file-separator FILE_SEPARATOR
+                        # Separator to use between content from multiple files (default: \n\n)
+```
+
+## Troubleshooting
+
+### Browser Driver Issues
+
+If you encounter browser driver errors:
+
+1. **Update webdriver-manager**:
+
+   ```bash
+   pip install --upgrade webdriver-manager
+   ```
+
+2. **Manual driver installation**:
+
+   - Chrome: Download [ChromeDriver](https://sites.google.com/chromium.org/driver/) matching your Chrome version
+   - Firefox: Download [GeckoDriver](https://github.com/mozilla/geckodriver/releases)
+
+### Editor Detection Issues
+
+If the script cannot find the editor:
+
+1. Try using the developer tools in your browser to inspect the editor element
+2. Find the relevant iframe ID or editor ID and specify it using `--iframe-id` or `--editor-id`
+3. Use `--detect-multiple` to let the script detect and offer a choice of editors
+
+### Whitespace Preservation Issues
+
+The latest version includes enhanced whitespace preservation. If you still experience whitespace issues:
+
+1. Use the `--formatted` flag to enable HTML formatting preservation
+2. For complex formatting, consider using HTML formatting in your source file
+
+### Linux-Specific Issues
+
+1. **Clipboard functionality**:
+
+   - Ensure `xclip` is installed: `sudo apt install xclip`
+   - For Wayland users, install `wl-clipboard`: `sudo apt install wl-clipboard`
+
+2. **Browser path issues**:
+   - Chrome: If Chrome isn't found, specify the binary location in the script
+   - Firefox: If Firefox isn't found, specify the binary location in the script
+
+## Advanced Features
+
+### Using Encrypted Sessions
+
+To enable encryption for session data (requires the `cryptography` package):
+
+```bash
+python3 tinymce_typer.py https://example.com content.txt --encrypt
+```
+
+You'll be prompted for a password to encrypt the session data.
+
+### Content Verification
+
+By default, the script verifies the typed content matches the source file. Disable with:
+
+```bash
+python3 tinymce_typer.py https://example.com content.txt --no-verification
+```
+
+### Performance Optimization
+
+For large content files, use batch mode for better performance:
+
+```bash
+python3 tinymce_typer.py https://example.com content.txt --batch --batch-size 100 --batch-delay 0.05
+```
+
+## Recent Improvements
+
+### Whitespace Preservation Enhancement
+
+The latest version includes significant improvements to whitespace handling:
+
+- Properly preserves line breaks and indentation from source files
+- Maintains consecutive spaces and tabs
+- Works across different rich text editor implementations
+- Implemented in all typing methods (character-by-character, batched, clipboard)
 
 ## Supported File Types
 
@@ -85,48 +336,6 @@ When inserting HTML content into an editor and preserving formatting:
 1. Use the `--formatted` flag
 2. Ensure your HTML file uses tags compatible with the editor
 3. Consider using multiple files with `--files` if you need to insert different sections with varied formatting
-
-## Installation
-
-1. Clone the repository:
-
-   ```bash
-   git clone https://github.com/mugabiBenjamin/tinymce_typer.git
-   cd tinymce_typer
-   ```
-
-2. Create and activate a virtual environment (recommended):
-
-   ```bash
-   python -m venv tinymce_venv
-
-   # On Windows
-   tinymce_venv\Scripts\activate
-
-   # On macOS/Linux
-   source tinymce_venv/bin/activate
-   ```
-
-3. Install required packages:
-
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-   The `requirements.txt` file should contain:
-
-   ```plaintext
-   selenium
-   webdriver-manager
-   pyperclip
-   cryptography  # Optional, for session encryption
-   ```
-
-4. Optional encryption support:
-
-   ```bash
-   pip install cryptography
-   ```
 
 ## Configuration
 
@@ -155,198 +364,27 @@ echo "PYTHONPATH=/home/username/path/to/selenium" > .env
 }
 ```
 
-TinyMCE Typer offers multiple configuration options through command-line arguments:
-
-### Basic Arguments
-
-- `url`: URL of the page with the TinyMCE editor
-- `file`: Path to the text file containing content to type
-
-### Browser Options
-
-- `--browser {chrome,firefox}`: Browser to use (default: chrome)
-- `--profile PATH`: Path to browser profile directory
-
-### Editor Location Options
-
-- `--iframe-id ID`: ID of the iframe containing TinyMCE
-- `--editor-id ID`: ID of the TinyMCE editor element
-- `--detect-multiple`: Detect and select from multiple editors
-
-### Content Insertion Options
-
-- `--type-delay SECONDS`: Delay between keystrokes (default: 0.01)
-- `--formatted`: Preserve HTML formatting in the content
-- `--no-clipboard`: Disable clipboard paste attempt
-- `--batch`: Use batch insertion for better performance
-- `--batch-size SIZE`: Characters to insert at once (default: 50)
-- `--batch-delay SECONDS`: Delay between batch insertions (default: 0.1)
-
-### Session Handling Options
-
-- `--no-session`: Disable session saving/loading
-- `--reset`: Reset progress from previous session
-- `--encrypt`: Encrypt session data with a password
-
-### Content Verification Options
-
-- `--no-verification`: Disable content verification after typing
-
-### Existing Browser Support
-
-- `--use-existing`: Connect to an existing browser session
-- `--debugging-port PORT`: Port for remote debugging (default: 9222)
-- `--marionette-port PORT`: Port for Firefox Marionette
-- `--force-navigation`: Force navigation to URL with existing browser
-
-### Multi-file Support
-
-- `--files FILE1 FILE2...`: Multiple content files to type sequentially
-- `--file-separator SEPARATOR`: Separator between content from multiple files
-
-## Advanced Use Cases
-
-### Working with Authenticated Sessions
-
-For sites requiring login:
-
-1. Start Chrome with remote debugging:
-
-   ```bash
-   # Starting Chrome with Debugging Port on windows
-   chrome.exe --remote-debugging-port=9222
-
-   # Starting Chrome with Debugging Port on macOS
-   /Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --remote-debugging-port=9222
-
-   # Starting Chrome with Debugging Port on Linux
-   google-chrome --remote-debugging-port=9222
-   ```
-
-2. Manually log in to the website
-
-3. Run TinyMCE Typer with existing session:
-
-   ```bash
-   python scripts/tinymce_typer.py "https://example.com/editor" "content.txt" --use-existing --debugging-port 9222
-   ```
-
 ### Resumable Content Insertion
 
 - For very large content that might need to be resumed:
 
-   ```bash
-   # Initial run
-   python scripts/tinymce_typer.py https://example.com/editor large_content.txt --batch
-   
-   # If interrupted, resume later
-   python scripts/tinymce_typer.py https://example.com/editor large_content.txt --batch
-   # (The script will detect the previous session and offer to resume)
-   ```
+  ```bash
+  # Initial run
+  python scripts/tinymce_typer.py https://example.com/editor large_content.txt --batch
+
+  # If interrupted, resume later
+  python scripts/tinymce_typer.py https://example.com/editor large_content.txt --batch
+  # (The script will detect the previous session and offer to resume)
+  ```
 
 ### Content Verification for Critical Applications
 
 - When accuracy is crucial:
 
-   ```bash
-   python tinymce_typer.py https://example.com/editor important_content.txt --type-delay 0.05
-   # (Default verification will run, or explicitly use --no-verification to disable)
-   ```
-
-## Usage
-
-### Basic Command Structure
-
-```bash
-python scripts/tinymce_typer.py "[URL]" "[FILE]" "[OPTIONS]"
-```
-
-1. **Insert content from a text file into a TinyMCE editor:**
-
-   ```bash
-   python scripts/tinymce_typer.py "https://example.com/page-with-editor" "content.txt"
-   ```
-
-2. **For faster typing with larger content:**
-
-   ```bash
-   python scripts/tinymce_typer.py "https://example.com/editor" "large_content.txt" --batch --batch-size 100 --batch-delay 0.1
-   ```
-
-3. **Preserve HTML formatting in your content:**
-
-   ```bash
-   python scripts/tinymce_typer.py "https://example.com/editor" "formatted_content.html" --formatted
-   ```
-
-4. **Connect to a running Chrome instance (useful for authenticated sessions):**
-
-   ```bash
-   # First, start Chrome with remote debugging enabled
-   # chrome.exe --remote-debugging-port=9222
- 
-   # Then run the script
-   python scripts/tinymce_typer.py "https://example.com/editor" "content.txt" --use-existing --debugging-port 9222
-   ```
-
-5. **Use a custom browser profile for authentication or specific settings:**
-
-   ```bash
-   python scripts/tinymce_typer.py "https://example.com/editor" "content.txt" --browser firefox --profile /path/to/firefox/profile
-   ```
-
-6. **When a page contains multiple editors:**
-
-   ```bash
-   python scripts/tinymce_typer.py "https://example.com/editor" "content.txt" --detect-multiple
-   ```
-
-7. **Encrypt your session data for sensitive content:**
-
-   ```bash
-   python scripts/tinymce_typer.py "https://example.com/editor" "sensitive_content.txt" --encrypt
-   ```
-
-8. **Insert content from multiple files with custom separators:**
-
-   ```bash
-   python scripts/tinymce_typer.py "https://example.com/editor" --files "intro.txt" "body.txt" "conclusion.txt" --file-separator "---\n\n"
-   ```
-
-### Advanced Usage Examples
-
-1. **Using Firefox with batch insertion:**
-
-   ```bash
-   python scripts/tinymce_typer.py "https://example.com/page" "content.md" --browser firefox --batch
-   ```
-
-2. **Preserving HTML formatting:**
-
-   ```bash
-   python scripts/tinymce_typer.py "https://example.com/page" "content.html" --formatted
-   ```
-
-3. **Using an existing Chrome session:**
-
-   ```bash
-   # First, start Chrome with remote debugging enabled:
-   # chrome.exe --remote-debugging-port=9222
-
-   python scripts/tinymce_typer.py "https://example.com/page" "content.md" --use-existing --debugging-port 9222
-   ```
-
-4. **Typing multiple files:**
-
-   ```bash
-   python scripts/tinymce_typer.py "https://example.com/page" "placeholder.txt" --files intro.md main.md conclusion.md
-   ```
-
-5. **With encrypted session data:**
-
-   ```bash
-   python scripts/tinymce_typer.py "https://example.com/page" "content.md" --encrypt
-   ```
+  ```bash
+  python tinymce_typer.py https://example.com/editor important_content.txt --type-delay 0.05
+  # (Default verification will run, or explicitly use --no-verification to disable)
+  ```
 
 ### Usage Workflow
 
@@ -378,84 +416,6 @@ tinymce_typer/
 └── tinymce_venv/          # Virtual environment (not tracked in git)
 ```
 
-## Security
-
-When working with sensitive content, consider these security features:
-
-- **Session Encryption**: Use the `--encrypt` flag to protect saved session data
-- **Browser Profiles**: Use a dedicated profile with `--profile` to isolate the automation
-
-To enable encryption, ensure the cryptography package is installed:
-
-```bash
-pip install cryptography
-```
-
-## Troubleshooting
-
-### Editor Not Found
-
-If the script cannot find the editor:
-
-1. Ensure the page is fully loaded before pressing Enter to start typing
-2. Try providing the iframe ID with `--iframe-id`
-3. Try providing the editor ID with `--editor-id`
-4. Check if the editor is in an iframe structure
-
-### Connection Issues
-
-If using `--use-existing` with Chrome:
-
-1. Close all Chrome instances
-2. Start Chrome with: `chrome.exe --remote-debugging-port=9222`
-3. Run the script with `--use-existing --debugging-port 9222`
-
-If using Firefox:
-
-   ```bash
-   python scripts/tinymce_typer.py "https://example.com/editor" "content.txt" --browser firefox --use-existing --marionette-port 2828
-   ```
-
-### Content Not Inserted Correctly
-
-If content verification fails:
-
-1. Try decreasing the typing speed with a higher `--type-delay`
-2. Use `--batch` mode with `--batch-size` to adjust chunk size
-3. Use `--formatted` if your content contains HTML
-
-### Browser Driver Issues
-
-If you encounter WebDriver errors:
-
-1. Ensure your browser is compatible with the WebDriver version
-
-2. Try updating the webdriver-manager package:
-
-   ```bash
-   pip install --upgrade webdriver-manager
-   ```
-
-3. Consider specifying a custom WebDriver path if needed
-
-## Performance Optimization
-
-For the best balance of speed and reliability:
-
-1. Use batch mode for large documents:
-
-   ```bash
-   python scripts/tinymce_typer.py "https://example.com/editor" "large_doc.txt" --batch
-   ```
-
-2. Adjust batch parameters for your specific environment:
-
-   ```bash
-   python scripts/tinymce_typer.py "https://example.com/editor" "large_doc.txt" --batch --batch-size 75 --batch-delay 0.15
-   ```
-
-3. Try clipboard insertion first (enabled by default), disable with `--no-clipboard` only if issues occur
-
 ## Notes
 
 - **Performance Considerations**: For very large files (>1MB), consider using batch mode (`--batch`) with a larger batch size for better performance.
@@ -469,16 +429,13 @@ For the best balance of speed and reliability:
 
 Contributions to TinyMCE Typer are welcome! To contribute:
 
-_Please ensure your code follows the project's style guidelines and includes appropriate tests._
-
 ## License
 
-This project is licensed under the terms of the license included in the repository. See the [MIT License](./LICENSE) file for details.
+- This project is licensed under the terms of the license included in the repository. See the [MIT License](./LICENSE) file for details.
 
 ## Feedback
 
 - Found a bug or have a feature request? Please open an [Issue](https://github.com/mugabiBenjamin/tinymce_typer/issues) on GitHub.
-- Want to contribute? Pull requests are welcome! See the [Contributing section](#contributing) for more details.
 
 ## Acknowledgements
 
