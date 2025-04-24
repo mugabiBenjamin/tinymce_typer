@@ -1,3 +1,6 @@
+# Ignore entire tinymce_typer folder  
+tinymce_typer/  
+
 # Virtual environment
 tinymce_venv/
 venv/
@@ -38,3 +41,10 @@ Thumbs.db
 
 # Ignore the Pyright configuration file  
 pyrightconfig.json
+
+# Ignore Python virtual environment packages  
+/bin/  
+/include/  
+/lib/  
+/lib64/  
+/pyvenv.cfg
