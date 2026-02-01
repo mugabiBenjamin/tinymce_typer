@@ -1,6 +1,6 @@
 # TinyMCE Typer
 
-![Python Version](https://img.shields.io/badge/Python-3.10%2B-blue?style=flat-square&logo=python)
+![Python Version](https://img.shields.io/badge/Python-3.12%2B-blue?style=flat-square&logo=python)
 ![License](https://img.shields.io/github/license/mugabiBenjamin/tinymce_typer?style=flat-square)
 ![Status](https://img.shields.io/badge/status-active-success?style=flat-square)
 ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square&logo=github)
@@ -13,7 +13,6 @@ TinyMCE Typer is a Python automation tool designed to assist with typing content
 - [Prerequisites](#prerequisites)
 - [Supported File Types](#supported-file-types)
 - [Installation](#installation)
-- [Configuration](#configuration)
 - [Usage](#usage)
 - [Project Structure](#project-structure)
 - [Troubleshooting](#troubleshooting)
@@ -41,61 +40,63 @@ TinyMCE Typer is a Python automation tool designed to assist with typing content
 
 Before using TinyMCE Typer, ensure you have the following installed:
 
-1. **Python 3.6+**: [Download Python](https://www.python.org/downloads/)
+1. **Python 3.12+**: [Download Python](https://www.python.org/downloads/)
 
-2. **Chrome** or **Firefox** browser:
+2. **uv**: The project uses `uv` for dependency management. Install it via:
+
+   ```bash
+   # macOS / Linux
+   curl -LsSf https://astral.sh/uv/install.sh | sh
+
+   # Windows (PowerShell)
+   powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+   ```
+
+3. **Chrome** or **Firefox** browser:
 
    - [Download Chrome](https://www.google.com/chrome/)
    - [Download Firefox](https://www.mozilla.org/firefox/)
-
-3. **Required Python packages**
-
-   ```bash
-   # All platforms
-   pip install selenium webdriver-manager pyperclip
-
-   # Optional: For session encryption
-   pip install cryptography
-   ```
 
 ### Platform-Specific Setup
 
 #### Windows
 
 ```powershell
-# Clone repository (if using git)
+# Clone repository
 git clone https://github.com/mugabiBenjamin/tinymce_typer.git
-cd tinymce-typer
+cd tinymce_typer
 
-# Install requirements
-pip install -r requirements.txt
+# Install dependencies
+uv sync
 ```
 
 #### macOS
 
 ```bash
-# Clone repository (if using git)
+# Clone repository
 git clone https://github.com/mugabiBenjamin/tinymce_typer.git
-cd tinymce-typer
+cd tinymce_typer
 
-# Install requirements
-pip install -r requirements.txt
+# Install dependencies
+uv sync
 ```
 
 #### Linux (Ubuntu/Debian)
 
 ```bash
-# Install dependencies
+# Install clipboard utility (required for clipboard paste operations)
 sudo apt update
-sudo apt install -y python3-pip xclip
+sudo apt install -y xclip
 
-# Clone repository (if using git)
+# Clone repository
 git clone https://github.com/mugabiBenjamin/tinymce_typer.git
-cd tinymce-typer
+cd tinymce_typer
 
-# Install requirements
-pip3 install -r requirements.txt
+# Install dependencies
+uv sync
 ```
+
+> **Note:** On Linux with Wayland, install `wl-clipboard` instead: `sudo apt install wl-clipboard`
 
 ## Supported File Types
 
@@ -121,11 +122,7 @@ When inserting HTML content into an editor and preserving formatting:
 ### Basic Usage
 
 ```bash
-# Windows
-python scripts/tinymce_typer.py https://example.com/page-with-editor your_content_file.txt
-
-# macOS/Linux
-python3 scripts/tinymce_typer.py https://example.com/page-with-editor your_content_file.txt
+uv run scripts/tinymce_typer.py https://example.com/page-with-editor your_content_file.txt
 ```
 
 ### Examples
@@ -133,35 +130,35 @@ python3 scripts/tinymce_typer.py https://example.com/page-with-editor your_conte
 1. **Basic usage with Chrome (default)**:
 
    ```bash
-   python3 scripts/tinymce_typer.py https://example.com/page-with-editor content.txt
+   uv run scripts/tinymce_typer.py https://example.com/page-with-editor content.txt
    ```
 
 2. **Use Firefox instead of Chrome**:
 
    ```bash
-   python3 scripts/tinymce_typer.py https://example.com/page-with-editor content.txt --browser firefox
+   uv run scripts/tinymce_typer.py https://example.com/page-with-editor content.txt --browser firefox
    ```
 
 3. **Specify TinyMCE iframe ID (if known)**:
 
    ```bash
-   python3 scripts/tinymce_typer.py https://example.com/page-with-editor content.txt --iframe-id tinymce_ifr
+   uv run scripts/tinymce_typer.py https://example.com/page-with-editor content.txt --iframe-id tinymce_ifr
    ```
 
 4. **Use browser profile for authenticated sessions**:
 
    ```bash
    # Windows Chrome
-   python scripts/tinymce_typer.py https://example.com/page-with-editor content.txt --profile "C:\Users\YourUsername\AppData\Local\Google\Chrome\User Data\Default"
+   uv run scripts/tinymce_typer.py https://example.com/page-with-editor content.txt --profile "C:\Users\YourUsername\AppData\Local\Google\Chrome\User Data\Default"
 
    # macOS Chrome
-   python3 scripts/tinymce_typer.py https://example.com/page-with-editor content.txt --profile "/Users/YourUsername/Library/Application Support/Google/Chrome/Default"
+   uv run scripts/tinymce_typer.py https://example.com/page-with-editor content.txt --profile "/Users/YourUsername/Library/Application Support/Google/Chrome/Default"
 
    # Linux Chrome
-   python3 scripts/tinymce_typer.py https://example.com/page-with-editor content.txt --profile "/home/yourusername/.config/google-chrome/Default"
+   uv run scripts/tinymce_typer.py https://example.com/page-with-editor content.txt --profile "/home/yourusername/.config/google-chrome/Default"
 
    # Firefox (all platforms)
-   python3 scripts/tinymce_typer.py https://example.com/page-with-editor content.txt --browser firefox --profile "/path/to/firefox/profile"
+   uv run scripts/tinymce_typer.py https://example.com/page-with-editor content.txt --browser firefox --profile "/path/to/firefox/profile"
    ```
 
 5. **Connect to existing browser (advanced)**:
@@ -174,7 +171,7 @@ python3 scripts/tinymce_typer.py https://example.com/page-with-editor your_conte
    google-chrome --remote-debugging-port=9222
 
    # Then connect the script
-   python3 scripts/tinymce_typer.py https://example.com/page-with-editor content.txt --use-existing --debugging-port=9222
+   uv run scripts/tinymce_typer.py https://example.com/page-with-editor content.txt --use-existing --debugging-port=9222
    ```
 
 ### Command Line Options
@@ -201,11 +198,11 @@ python3 scripts/tinymce_typer.py https://example.com/page-with-editor your_conte
 #### Editor Location Options
 
 ```bash
---iframe-id IFRAME_ID
+  --iframe-id IFRAME_ID
                         # ID of the iframe containing TinyMCE (if applicable)
---editor-id EDITOR_ID
+  --editor-id EDITOR_ID
                         # ID of the TinyMCE editor element (if known)
---detect-multiple       # Detect and select from multiple TinyMCE editors
+  --detect-multiple     # Detect and select from multiple TinyMCE editors
 ```
 
 #### Content Insertion Options
@@ -259,80 +256,50 @@ python3 scripts/tinymce_typer.py https://example.com/page-with-editor your_conte
 
 ### Using Encrypted Sessions
 
-- To enable encryption for session data (requires the `cryptography` package):
+To enable encryption for session data:
 
-  ```bash
-  python3 scripts/tinymce_typer.py https://example.com content.txt --encrypt
-  ```
+```bash
+uv run scripts/tinymce_typer.py https://example.com content.txt --encrypt
+```
 
-You'll be prompted for a password to encrypt the session data.
+You'll be prompted for a password to encrypt the session data. The `cryptography` package is included in the project dependencies.
 
 ### Content Verification
 
-- By default, the script verifies the typed content matches the source file. Disable with:
+By default, the script verifies the typed content matches the source file. Disable with:
 
-  ```bash
-  python3 scripts/tinymce_typer.py https://example.com content.txt --no-verification
-  ```
+```bash
+uv run scripts/tinymce_typer.py https://example.com content.txt --no-verification
+```
 
 ### Performance Optimization
 
-- For large content files, use batch mode for better performance:
+For large content files, use batch mode for better performance:
 
-  ```bash
-  python3 scripts/tinymce_typer.py https://example.com content.txt --batch --batch-size 100 --batch-delay 0.05
-  ```
+```bash
+uv run scripts/tinymce_typer.py https://example.com content.txt --batch --batch-size 100 --batch-delay 0.05
+```
 
 ### Resumable Content Insertion
 
-- TinyMCE Typer automatically saves session progress and can resume from where it left off:
+TinyMCE Typer automatically saves session progress and can resume from where it left off:
 
-  ```bash
-  # Initial run that gets interrupted
-  python scripts/tinymce_typer.py https://example.com/editor large_content.txt --batch
+```bash
+# Initial run that gets interrupted
+uv run scripts/tinymce_typer.py https://example.com/editor large_content.txt --batch
 
-  # Resume later (the script detects the previous session)
-  python scripts/tinymce_typer.py https://example.com/editor large_content.txt
+# Resume later (the script detects the previous session)
+uv run scripts/tinymce_typer.py https://example.com/editor large_content.txt
 
-  # Force restart from beginning
-  python scripts/tinymce_typer.py https://example.com/editor large_content.txt --reset
-  ```
+# Force restart from beginning
+uv run scripts/tinymce_typer.py https://example.com/editor large_content.txt --reset
+```
 
-- For encrypted sessions, you'll need to provide the same password to resume:
+For encrypted sessions, you'll need to provide the same password to resume:
 
-  ```bash
-  python scripts/tinymce_typer.py https://example.com/editor large_content.txt --encrypt
-  ```
-
-## Configuration
-
-### Environment Setup
-
-- For proper module resolution, create a `.env` file in your project root:
-
-  ```bash
-  # Windows
-  echo PYTHONPATH=%CD% > .env
-
-  # macOS/Linux
-  echo "PYTHONPATH=$(pwd)" > .env
-  ```
-
-### IDE Configuration (VS Code)
-
-- Create a `pyrightconfig.json` file for better code intelligence:
-
-  ```bash
-  {
-    "venvPath": ".",
-    "venv": "tinymce_venv",
-    "pythonVersion": "3.12",
-    "extraPaths": ["./tinymce_venv/lib/python3.12/site-packages"],
-    "typeCheckingMode": "off",
-    "useLibraryCodeForTypes": true,
-    "python.envFile": "${workspaceFolder}/.env"
-  }
-  ```
+```bash
+uv run scripts/tinymce_typer.py https://example.com/editor large_content.txt --encrypt
+```
 
 ## Usage Workflow
 
@@ -362,20 +329,17 @@ You'll be prompted for a password to encrypt the session data.
 
 ## Project Structure
 
-The project is organized as follows:
-
 ```plaintext
 tinymce_typer/
 ├── scripts/
-│   └── tinymce_typer.py   # Main script
-├── content.md             # Sample content file
-├── README.md              # Project documentation
-├── SETUP.md               # Additional setup instructions
-├── requirements.txt       # Python dependencies
-├── LICENSE                # License information
-├── pyrightconfig.json     # Python language server configuration
-├── .env                   # Environment variables
-└── tinymce_venv/          # Virtual environment (not tracked in git)
+│   └── tinymce_typer.py    # Main script
+├── content.txt             # Sample content file
+├── pyproject.toml          # Project metadata and dependencies (uv)
+├── uv.lock                 # Locked dependency versions
+├── .python-version         # Python version pin
+├── README.md               # Project documentation
+├── LICENSE                 # License information
+└── .venv/                  # Virtual environment (not tracked in git)
 ```
 
 ## Troubleshooting
@@ -384,13 +348,13 @@ tinymce_typer/
 
 If you encounter browser driver errors:
 
-1. **Update webdriver-manager**:
+1. **Ensure dependencies are up to date**:
 
    ```bash
-   pip install --upgrade webdriver-manager
+   uv sync
    ```
 
-2. **Manual driver installation**:
+2. **Manual driver installation** (if automatic management fails):
 
    - Chrome: Download [ChromeDriver](https://sites.google.com/chromium.org/driver/) matching your Chrome version
    - Firefox: Download [GeckoDriver](https://github.com/mozilla/geckodriver/releases)
@@ -419,7 +383,7 @@ The latest version includes enhanced whitespace preservation. If you still exper
 
 #### On macOS
 
-- If using Homebrew Python, you may need to use python3 explicitly
+- If using Homebrew Python, you may need to use `python3` explicitly
 - For application permissions, you might need to grant accessibility permissions
 
 #### On Linux
@@ -441,15 +405,15 @@ The latest version includes enhanced whitespace preservation. If you still exper
 
 ## Contributing
 
-- Contributions to TinyMCE Typer are welcome!
+Contributions to TinyMCE Typer are welcome!
 
 ## License
 
-- This project is licensed under the terms of the license included in the repository. See the [MIT License](./LICENSE) file for details.
+This project is licensed under the terms of the license included in the repository. See the [MIT License](./LICENSE) file for details.
 
 ## Feedback
 
-- Found a bug or have a feature request? Please open an [Issue](https://github.com/mugabiBenjamin/tinymce_typer/issues) on GitHub.
+Found a bug or have a feature request? Please open an [Issue](https://github.com/mugabiBenjamin/tinymce_typer/issues) on GitHub.
 
 ## Acknowledgements
 
