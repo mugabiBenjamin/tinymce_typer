@@ -49,3 +49,5 @@ pyrightconfig.json
 /lib/  
 /lib64/  
 /pyvenv.cfg
+
+*repomix-output.xml
