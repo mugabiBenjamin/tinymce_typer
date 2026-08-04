@@ -1,428 +1,338 @@
 # TinyMCE Typer
 
 ![Python Version](https://img.shields.io/badge/Python-3.12%2B-blue?style=flat-square&logo=python)
-![License](https://img.shields.io/github/license/mugabiBenjamin/tinymce_typer?style=flat-square)
 ![Status](https://img.shields.io/badge/status-active-success?style=flat-square)
 ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square&logo=github)
 
-TinyMCE Typer is a Python automation tool designed to assist with typing content into **TinyMCE** rich text editors and additional compatibility with CKEditor, Quill, and generic contenteditable elements. This utility uses Selenium WebDriver to locate editors on web pages and insert content from text files either character-by-character, in batches, or via clipboard operations. It's particularly useful for situations where you need to transfer large amounts of text into web forms that use rich text editors.
+TinyMCE Typer is a Python automation tool for inserting content from local text-based files into browser-based rich text editors. It is primarily designed for **TinyMCE**, with best-effort compatibility for **CKEditor**, **Quill**, and generic `contenteditable` elements.
+
+The tool uses Selenium WebDriver to open or attach to a browser, locate a supported editor, insert content using the selected insertion method, track progress, optionally save resumable session data, and verify whether the final editor content appears to match the source.
+
+> **Important:** This project automates browser interaction. Use it only for legitimate content insertion, respect website terms of service, and avoid overloading or bypassing systems that prohibit automation.
 
 ## Table of Contents
 
-- [Features](#features)
-- [Prerequisites](#prerequisites)
-- [Supported File Types](#supported-file-types)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Project Structure](#project-structure)
-- [Troubleshooting](#troubleshooting)
-- [Notes](#notes)
-- [Contributing](#contributing)
-- [License](#license)
-- [Feedback](#feedback)
-- [Acknowledgements](#acknowledgements)
+- [TinyMCE Typer](#tinymce-typer)
+  - [Table of Contents](#table-of-contents)
+  - [Support Status](#support-status)
+  - [Features](#features)
+  - [Safety and Limitations](#safety-and-limitations)
+    - [Direct DOM insertion limitations](#direct-dom-insertion-limitations)
+    - [Clipboard behavior](#clipboard-behavior)
+    - [Browser profiles and authenticated sessions](#browser-profiles-and-authenticated-sessions)
+    - [Known limitations](#known-limitations)
+  - [Prerequisites](#prerequisites)
+  - [Installation](#installation)
+    - [Windows](#windows)
+    - [macOS](#macos)
+    - [Linux (Ubuntu/Debian)](#linux-ubuntudebian)
+  - [Supported File Types](#supported-file-types)
+  - [Usage](#usage)
+    - [Basic usage](#basic-usage)
+    - [Use Firefox](#use-firefox)
+    - [Specify a TinyMCE iframe ID](#specify-a-tinymce-iframe-id)
+    - [Use an authenticated browser profile](#use-an-authenticated-browser-profile)
+    - [Connect to an existing Chrome session](#connect-to-an-existing-chrome-session)
+    - [Batch mode for large files](#batch-mode-for-large-files)
+    - [Reset saved progress](#reset-saved-progress)
+  - [Command-Line Options](#command-line-options)
+    - [Required arguments](#required-arguments)
+    - [Browser options](#browser-options)
+    - [Editor location options](#editor-location-options)
+    - [Content insertion options](#content-insertion-options)
+    - [Session options](#session-options)
+  - [Changelog](#changelog)
+    - [\[Unreleased\]](#unreleased)
+      - [Documentation](#documentation)
+      - [Repository hygiene](#repository-hygiene)
+      - [Planned refactor milestones](#planned-refactor-milestones)
+    - [\[0.1.0\] — Initial project state](#010--initial-project-state)
+      - [Added](#added)
+
+## Support Status
+
+| Area | Status | Notes |
+| --- | --- | --- |
+| TinyMCE | Primary support | The tool searches for common TinyMCE iframe patterns and can target known iframe/editor IDs. |
+| CKEditor | Best-effort support | Detection is available for common CKEditor iframe structures, but behavior can vary by CKEditor version and site configuration. |
+| Quill | Best-effort support | Detection targets `.ql-editor`, but full Quill state synchronization may require editor-native APIs in future versions. |
+| Generic `contenteditable` | Fallback support | Useful when no known editor framework is detected, but reliability depends heavily on the website. |
+| Clipboard insertion | Best-effort support | Depends on the operating system clipboard backend, browser permissions, and website behavior. |
+| Direct HTML insertion | Fast but limited | Updates DOM content directly and may not trigger all editor/framework events. |
+| Batch insertion | Performance-oriented | Useful for large content, but still needs verification. |
+| Character insertion | Compatibility-oriented | Slower and may not behave like true human typing in every editor. |
+| Session resume | Basic support | Resume is based on saved progress; future versions should include stronger file hashing and editor identity checks. |
+| Verification | Basic support | Uses normalized content comparison; formatting or editor-generated markup can affect results. |
 
 ## Features
 
-- **Rich Text Editor Support**: Works with TinyMCE, CKEditor, Quill, and generic contenteditable elements
-- **Multiple Input Methods**: Character-by-character typing, batch insertion, and clipboard pasting
-- **Whitespace Preservation**: Maintains all whitespace, indentation, and line breaks from source files
-- **Progress Tracking**: Shows typing progress with speed and estimated time remaining
-- **Session Management**: Save and resume typing sessions with optional encryption
-- **Multi-Browser Support**: Works with Chrome and Firefox
-- **Multiple File Input**: Combine content from multiple files
-- **Browser Profile Support**: Use existing browser profiles for authentication
-- **Existing Browser Connection**: Connect to already running browser instances
+- Rich text editor detection for TinyMCE, CKEditor, Quill, and generic `contenteditable` elements.
+- Multiple insertion modes: clipboard, formatted/direct HTML, batch insertion, and character-based insertion.
+- Whitespace and line-break preservation for plain text content.
+- Support for Chrome and Firefox.
+- Browser profile support for sites that require authentication.
+- Ability to connect to an existing browser session.
+- Multiple input files with configurable separators.
+- Progress display with estimated speed and remaining time.
+- Optional resumable sessions.
+- Optional encrypted session data when encryption dependencies are available.
+- Basic post-insertion verification.
+
+## Safety and Limitations
+
+### Direct DOM insertion limitations
+
+Some insertion paths use direct DOM updates such as setting editor HTML content. This can be fast, but it is not always equivalent to real user typing.
+
+Direct DOM insertion may fail to trigger:
+
+- editor change events
+- framework state updates
+- autosave hooks
+- dirty-state tracking
+- validation logic
+- undo history
+- custom website event handlers
+
+Always review the inserted content before submitting a form. If a website depends heavily on JavaScript framework state, direct DOM insertion may appear successful visually while the underlying form state remains unchanged.
+
+### Clipboard behavior
+
+Clipboard insertion depends on the operating system, browser, permissions, and installed clipboard utilities. On Linux, clipboard operations may require `xclip` or `wl-clipboard` depending on the display server.
+
+The tool may temporarily overwrite your clipboard while inserting content. Future versions should make clipboard restoration stricter across all success and failure paths.
+
+### Browser profiles and authenticated sessions
+
+Browser profiles can help when a website requires login, but they also carry risk. A browser profile may contain active sessions, cookies, saved logins, extensions, and personal browsing state.
+
+Use browser profiles carefully:
+
+- Prefer a dedicated automation browser profile.
+- Avoid using a profile that contains sensitive sessions unless necessary.
+- Review the page manually before submitting content.
+- Do not run automation against pages where accidental submission would cause harm.
+- Avoid pages containing password fields or destructive actions.
+
+### Known limitations
+
+- Editor support varies by website and editor version.
+- Some websites block automation, pasting, or scripted DOM changes.
+- Verification is basic and may not catch all formatting differences.
+- Resume behavior can be unsafe if the source file changes after progress is saved.
+- Direct HTML insertion can create malformed or unexpected markup if the source content is not prepared correctly.
+- Firefox existing-session support is experimental.
+- Very large files may require batch mode and enough browser memory.
+- The browser intentionally remains open after completion for manual review unless lifecycle behavior is changed in future versions.
+
+## Prerequisites
+
+Before using TinyMCE Typer, install:
+
+1. **Python 3.12+**
+2. **uv** for dependency management
+3. **Chrome** or **Firefox**
+4. A clipboard utility when using clipboard mode on Linux:
+   - X11: `xclip`
+   - Wayland: `wl-clipboard`
 
 ## Installation
 
-### Prerequisites
-
-Before using TinyMCE Typer, ensure you have the following installed:
-
-1. **Python 3.12+**: [Download Python](https://www.python.org/downloads/)
-
-2. **uv**: The project uses `uv` for dependency management. Install it via:
-
-   ```bash
-   # macOS / Linux
-   curl -LsSf https://astral.sh/uv/install.sh | sh
-
-   # Windows (PowerShell)
-   powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
-   ```
-
-3. **Chrome** or **Firefox** browser:
-
-   - [Download Chrome](https://www.google.com/chrome/)
-   - [Download Firefox](https://www.mozilla.org/firefox/)
-
-### Platform-Specific Setup
-
-#### Windows
+### Windows
 
 ```powershell
-# Clone repository
 git clone https://github.com/mugabiBenjamin/tinymce_typer.git
 cd tinymce_typer
-
-# Install dependencies
 uv sync
 ```
 
-#### macOS
+### macOS
 
 ```bash
-# Clone repository
 git clone https://github.com/mugabiBenjamin/tinymce_typer.git
 cd tinymce_typer
-
-# Install dependencies
 uv sync
 ```
 
-#### Linux (Ubuntu/Debian)
+### Linux (Ubuntu/Debian)
 
 ```bash
-# Install clipboard utility (required for clipboard paste operations)
 sudo apt update
 sudo apt install -y xclip
 
-# Clone repository
 git clone https://github.com/mugabiBenjamin/tinymce_typer.git
 cd tinymce_typer
-
-# Install dependencies
 uv sync
 ```
 
-> **Note:** On Linux with Wayland, install `wl-clipboard` instead: `sudo apt install wl-clipboard`
+For Wayland:
+
+```bash
+sudo apt install -y wl-clipboard
+```
 
 ## Supported File Types
 
-TinyMCE Typer works with various text-based file formats:
+TinyMCE Typer is intended for text-based files:
 
-- **Plain text files** (`.txt`): Standard text without formatting
-- **Markdown files** (`.md`, `.markdown`): Preserves Markdown syntax
-- **HTML files** (`.html`, `.htm`): Can preserve HTML formatting when used with `--formatted` flag
-- **Rich Text Format** (`.rtf`): Basic support (text content only)
-- **XML files** (`.xml`): Text content is preserved
-- **JavaScript/CSS/Code files** (`.js`, `.css`, `.py`, etc.): Code can be inserted as-is
-- **CSV/TSV files** (`.csv`, `.tsv`): Will preserve structure but may not format as tables
-- **JSON files** (`.json`): Content will be inserted as raw text
+- `.txt`
+- `.md` / `.markdown`
+- `.html` / `.htm`
+- `.rtf` — basic text extraction only
+- `.xml`
+- `.js`, `.css`, `.py`, and other code files
+- `.csv` / `.tsv`
+- `.json`
 
-When inserting HTML content into an editor and preserving formatting:
-
-1. Use the `--formatted` flag
-2. Ensure your HTML file uses tags compatible with the editor
-3. Consider using multiple files with `--files` if you need to insert different sections with varied formatting
+When inserting HTML content and preserving formatting, use formatted mode and ensure the HTML is compatible with the target editor.
 
 ## Usage
 
-### Basic Usage
+### Basic usage
 
 ```bash
-uv run scripts/tinymce_typer.py https://example.com/page-with-editor your_content_file.txt
+uv run scripts/tinymce_typer.py https://example.com/page-with-editor content.txt
 ```
 
-### Examples
-
-1. **Basic usage with Chrome (default)**:
-
-   ```bash
-   uv run scripts/tinymce_typer.py https://example.com/page-with-editor content.txt
-   ```
-
-2. **Use Firefox instead of Chrome**:
-
-   ```bash
-   uv run scripts/tinymce_typer.py https://example.com/page-with-editor content.txt --browser firefox
-   ```
-
-3. **Specify TinyMCE iframe ID (if known)**:
-
-   ```bash
-   uv run scripts/tinymce_typer.py https://example.com/page-with-editor content.txt --iframe-id tinymce_ifr
-   ```
-
-4. **Use browser profile for authenticated sessions**:
-
-   ```bash
-   # Windows Chrome
-   uv run scripts/tinymce_typer.py https://example.com/page-with-editor content.txt --profile "C:\Users\YourUsername\AppData\Local\Google\Chrome\User Data\Default"
-
-   # macOS Chrome
-   uv run scripts/tinymce_typer.py https://example.com/page-with-editor content.txt --profile "/Users/YourUsername/Library/Application Support/Google/Chrome/Default"
-
-   # Linux Chrome
-   uv run scripts/tinymce_typer.py https://example.com/page-with-editor content.txt --profile "/home/yourusername/.config/google-chrome/Default"
-
-   # Firefox (all platforms)
-   uv run scripts/tinymce_typer.py https://example.com/page-with-editor content.txt --browser firefox --profile "/path/to/firefox/profile"
-   ```
-
-5. **Connect to existing browser (advanced)**:
-
-   ```bash
-   # Start Chrome with remote debugging (Windows)
-   start chrome --remote-debugging-port=9222
-
-   # Start Chrome with remote debugging (macOS/Linux)
-   google-chrome --remote-debugging-port=9222
-
-   # Then connect the script
-   uv run scripts/tinymce_typer.py https://example.com/page-with-editor content.txt --use-existing --debugging-port=9222
-   ```
-
-### Command Line Options
-
-#### Basic Options
+### Use Firefox
 
 ```bash
-# positional arguments:
-  url                   # URL of the page with TinyMCE editor
-  file                  # Path to the text file containing content to type
-
-# optional arguments:
-  -h, --help            # Show this help message and exit
+uv run scripts/tinymce_typer.py https://example.com/page-with-editor content.txt --browser firefox
 ```
 
-#### Browser Options
+### Specify a TinyMCE iframe ID
 
 ```bash
-  --browser {chrome,firefox}
-                        # Browser to use (default: chrome)
-  --profile PROFILE     # Path to browser profile directory
+uv run scripts/tinymce_typer.py https://example.com/page-with-editor content.txt --iframe-id tinymce_ifr
 ```
 
-#### Editor Location Options
+### Use an authenticated browser profile
 
 ```bash
-  --iframe-id IFRAME_ID
-                        # ID of the iframe containing TinyMCE (if applicable)
-  --editor-id EDITOR_ID
-                        # ID of the TinyMCE editor element (if known)
-  --detect-multiple     # Detect and select from multiple TinyMCE editors
+uv run scripts/tinymce_typer.py https://example.com/page-with-editor content.txt --profile "/path/to/browser/profile"
 ```
 
-#### Content Insertion Options
+Prefer a dedicated automation profile instead of your daily personal browser profile.
+
+### Connect to an existing Chrome session
+
+Start Chrome with remote debugging enabled:
 
 ```bash
-  --type-delay TYPE_DELAY
-                        # Delay between keystrokes in seconds (default: 0.01)
-  --formatted           # Preserve HTML formatting in the content
-  --no-clipboard        # Disable clipboard paste attempt
-  --batch               # Use batch insertion for better performance
-  --batch-size BATCH_SIZE
-                        # Number of characters to insert at once (default: 50)
-  --batch-delay BATCH_DELAY
-                        # Delay between batch insertions in seconds (default: 0.1)
+google-chrome --remote-debugging-port=9222
 ```
 
-#### Session Handling Options
+Then connect the script:
 
 ```bash
-  --no-session          # Disable session saving/loading
-  --reset               # Reset progress from previous session
-  --encrypt             # Encrypt session data with a password
+uv run scripts/tinymce_typer.py https://example.com/page-with-editor content.txt --use-existing --debugging-port=9222
 ```
 
-#### Content Verification Options
+### Batch mode for large files
 
 ```bash
-  --no-verification     # Disable content verification after typing
+uv run scripts/tinymce_typer.py https://example.com/editor large_content.txt --batch --batch-size 100 --batch-delay 0.05
 ```
 
-#### Existing Browser Support
+### Reset saved progress
 
 ```bash
-  --use-existing        # Connect to an existing browser session instead of starting new one
-  --debugging-port DEBUGGING_PORT
-                        # Port for remote debugging (default: 9222, used with --use-existing)
-  --marionette-port MARIONETTE_PORT
-                        # Port for Firefox Marionette (used with --use-existing for Firefox)
-  --force-navigation    # Force navigation to URL even when using existing browser
+uv run scripts/tinymce_typer.py https://example.com/editor content.txt --reset
 ```
 
-#### Multi-file Support
+## Command-Line Options
 
-```bash
-  --files [FILES ...]   # Multiple content files to type sequentially
-  --file-separator FILE_SEPARATOR
-                        # Separator to use between content from multiple files (default: \n\n)
-```
+### Required arguments
 
-## Advanced Features
+| Argument | Description |
+| --- | --- |
+| `url` | URL of the page containing the editor |
+| `file` | Path to the text file with content to insert |
 
-### Using Encrypted Sessions
+### Browser options
 
-To enable encryption for session data:
+| Option | Description |
+| --- | --- |
+| `--browser {chrome,firefox}` | Browser to use. Default: `chrome` |
+| `--profile PROFILE` | Path to browser profile directory |
+| `--use-existing` | Attach to an existing browser session |
+| `--debugging-port PORT` | Remote debugging port for an existing Chrome session. Default: `9222` |
 
-```bash
-uv run scripts/tinymce_typer.py https://example.com content.txt --encrypt
-```
+### Editor location options
 
-You'll be prompted for a password to encrypt the session data. The `cryptography` package is included in the project dependencies.
+| Option | Description |
+| --- | --- |
+| `--iframe-id IFRAME_ID` | ID of the iframe containing TinyMCE |
+| `--editor-id EDITOR_ID` | ID of the editor element |
+| `--detect-multiple` | Detect and select from multiple editors on the page |
 
-### Content Verification
+### Content insertion options
 
-By default, the script verifies the typed content matches the source file. Disable with:
+| Option | Description |
+| --- | --- |
+| `--type-delay TYPE_DELAY` | Delay between characters in seconds. Default: `0.01` |
+| `--formatted` | Preserve HTML formatting in the content |
+| `--no-clipboard` | Disable clipboard paste attempt |
+| `--batch` | Use batch insertion mode |
+| `--batch-size BATCH_SIZE` | Characters per batch. Default: `50` |
+| `--batch-delay BATCH_DELAY` | Delay between batches in seconds. Default: `0.1` |
 
-```bash
-uv run scripts/tinymce_typer.py https://example.com content.txt --no-verification
-```
+### Session options
 
-### Performance Optimization
+| Option | Description |
+| --- | --- |
+| `--no-session` | Disable session saving and loading |
+| `--reset` | Reset any saved progress for the given URL and file |
 
-For large content files, use batch mode for better performance:
+## Changelog
 
-```bash
-uv run scripts/tinymce_typer.py https://example.com content.txt --batch --batch-size 100 --batch-delay 0.05
-```
+All notable changes to this project will be documented here. The format is based on Keep a Changelog conventions, and this project uses semantic versioning once formal releases begin.
 
-### Resumable Content Insertion
+### [Unreleased]
 
-TinyMCE Typer automatically saves session progress and can resume from where it left off:
+#### Documentation
 
-```bash
-# Initial run that gets interrupted
-uv run scripts/tinymce_typer.py https://example.com/editor large_content.txt --batch
+- Clarified that TinyMCE is the primary supported editor target.
+- Clarified that CKEditor, Quill, and generic `contenteditable` support are currently best-effort.
+- Added warnings about direct `innerHTML`/DOM insertion not always triggering editor or framework events.
+- Added safer usage notes for browser profiles and authenticated sessions.
+- Clarified clipboard behavior and operating-system dependency risks.
+- Added known limitations for verification, resume behavior, browser automation, and large files.
+- Linked this changelog from the README.
 
-# Resume later (the script detects the previous session)
-uv run scripts/tinymce_typer.py https://example.com/editor large_content.txt
+#### Repository hygiene
 
-# Force restart from beginning
-uv run scripts/tinymce_typer.py https://example.com/editor large_content.txt --reset
-```
+- Added `.env.example` for future configuration defaults.
+- Cleaned and categorized `.gitignore` entries.
+- Added missing MIT `LICENSE` file for consistency with the README license statement.
 
-For encrypted sessions, you'll need to provide the same password to resume:
+#### Planned refactor milestones
 
-```bash
-uv run scripts/tinymce_typer.py https://example.com/editor large_content.txt --encrypt
-```
+These are not yet implemented but define the next architectural direction:
 
-## Usage Workflow
+- Split CLI parsing from browser automation logic.
+- Introduce a typed settings/config object.
+- Extract content loading and formatting into a content module.
+- Extract browser setup into Chrome and Firefox providers.
+- Extract editor detection into editor-specific adapters.
+- Extract insertion behavior into strategy classes.
+- Extract session persistence and encryption into session modules.
+- Extract verification into a dedicated verifier module.
+- Add logging, custom exceptions, diagnostics, tests, and packaging improvements.
+- Apply separation of concerns and SOLID principles throughout the refactor.
 
-1. **Preparation:**
+### [0.1.0] — Initial project state
 
-   - Prepare your content file(s)
-   - Identify the URL with the rich text editor
-   - Determine if you need any special options (browser profiles, formatting, etc.)
+#### Added
 
-2. **Execution:**
+- Selenium-based browser automation for inserting content into rich text editors.
+- TinyMCE-oriented editor detection.
+- Best-effort CKEditor, Quill, and generic `contenteditable` detection.
+- Clipboard, formatted/direct insertion, batch insertion, and character-based insertion modes.
+- Single-file and multi-file content loading.
+- Basic progress tracking.
+- Basic resumable session support.
+- Optional encrypted session storage when encryption dependencies are available.
+- Basic content verification.
 
-   - The script launches or connects to a browser and navigates to the specified URL
-   - It locates the rich text editor on the page (prompting for selection if multiple editors are found)
-   - Content insertion begins using the preferred method (clipboard pasting first, typing methods as fallback)
-   - Real-time progress is displayed with typing speed and estimated time remaining
-
-3. **Verification and Completion:**
-
-   - After typing completes, content verification checks if the text was inserted correctly
-   - The browser remains open for you to review and submit the form
-   - Session information is saved for potential resumption later
-
-4. **Resumption (if needed):**
-
-   - If interrupted, run the same command again to resume from where you left off
-   - For encrypted sessions, provide the same password when prompted
-
-## Project Structure
-
-```plaintext
-tinymce_typer/
-├── scripts/
-│   └── tinymce_typer.py    # Main script
-├── content.txt             # Sample content file
-├── pyproject.toml          # Project metadata and dependencies (uv)
-├── uv.lock                 # Locked dependency versions
-├── .python-version         # Python version pin
-├── README.md               # Project documentation
-├── LICENSE                 # License information
-└── .venv/                  # Virtual environment (not tracked in git)
-```
-
-## Troubleshooting
-
-### Browser Driver Issues
-
-If you encounter browser driver errors:
-
-1. **Ensure dependencies are up to date**:
-
-   ```bash
-   uv sync
-   ```
-
-2. **Manual driver installation** (if automatic management fails):
-
-   - Chrome: Download [ChromeDriver](https://sites.google.com/chromium.org/driver/) matching your Chrome version
-   - Firefox: Download [GeckoDriver](https://github.com/mozilla/geckodriver/releases)
-
-### Editor Detection Issues
-
-If the script cannot find the editor:
-
-1. Try using the developer tools in your browser to inspect the editor element
-2. Find the relevant iframe ID or editor ID and specify it using `--iframe-id` or `--editor-id`
-3. Use `--detect-multiple` to let the script detect and offer a choice of editors
-
-### Whitespace Preservation Issues
-
-The latest version includes enhanced whitespace preservation. If you still experience whitespace issues:
-
-1. Use the `--formatted` flag to enable HTML formatting preservation
-2. For complex formatting, consider using HTML formatting in your source file
-
-### Platform Specific Issues
-
-#### On Windows
-
-- If Python is not in your PATH, use the full path to the Python executable
-- For browser profile paths with spaces, enclose the path in quotes
-
-#### On macOS
-
-- If using Homebrew Python, you may need to use `python3` explicitly
-- For application permissions, you might need to grant accessibility permissions
-
-#### On Linux
-
-- Ensure `xclip` is installed: `sudo apt install xclip`
-- For Wayland users, install `wl-clipboard`: `sudo apt install wl-clipboard`
-
-## Notes
-
-- **Performance Considerations:** For very large files (>1MB), use batch mode with a larger batch size.
-- **Browser Memory:** Chrome typically handles larger content better than Firefox.
-- **Website Limitations:** Some websites may have anti-automation measures affecting typing or pasting.
-- **Session Files:** Session data is stored in `tinymce_session.json` in the script directory.
-- **System Resources:** Ensure sufficient memory when working with large files, especially in batch mode.
-- **Testing:** Test with small content samples before attempting large documents.
-- **Authentication:** For sites requiring login, use `--profile` or `--use-existing` options.
-- **Cross-platform:** Path formats differ between operating systems; use appropriate path syntax.
-- **File Encoding:** Input files are read using UTF-8 encoding by default.
-
-## Contributing
-
-Contributions to TinyMCE Typer are welcome!
-
-## License
-
-This project is licensed under the terms of the license included in the repository. See the [MIT License](./LICENSE) file for details.
-
-## Feedback
-
-Found a bug or have a feature request? Please open an [Issue](https://github.com/mugabiBenjamin/tinymce_typer/issues) on GitHub.
-
-## Acknowledgements
-
-- Selenium WebDriver
-- TinyMCE
-- Pyperclip
-
-Made with ❤️ by the **Hybrids**
-
-**Note**: _This tool is provided for legitimate content insertion purposes. Always respect website terms of service and avoid overloading servers with automated requests._
-
-[Back to top](#tinymce-typer)
+[Back to Top](#tinymce-typer)

@@ -1,36 +1,60 @@
-# Ignore entire tinymce_typer folder  
-tinymce_typer/  
-
-# Virtual environment
-tinymce_venv/
-venv/
-env/
-ENV/
-.venv/
-
-# Python cache files
+# Python bytecode and caches
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.pyre/
+.pytype/
 
-# Session files
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+tinymce_venv/
+/bin/
+/include/
+/lib/
+/lib64/
+/pyvenv.cfg
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Session and runtime state
 tinymce_session.json
 *.session
-
-# Environment variables
-.env
-.env.local
-
-# Browser profiles
 browser_profiles/
 
-# Log files
+# Logs and diagnostics
 *.log
 logs/
+*.trace
+screenshots/
+diagnostics/
 
-# IDE specific files
+# Test and coverage artifacts
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.tox/
+.nox/
+
+# Build and packaging artifacts
+build/
+dist/
+*.egg-info/
+.eggs/
+site/
+
+# IDE/editor files
 .idea/
 .vscode/
 *.swp
@@ -40,14 +64,8 @@ logs/
 .DS_Store
 Thumbs.db
 
-# Ignore the Pyright configuration file  
-pyrightconfig.json
-
-# Ignore Python virtual environment packages  
-/bin/  
-/include/  
-/lib/  
-/lib64/  
-/pyvenv.cfg
-
+# Generated repository exports
 *repomix-output.xml
+
+# Local generated package/module copies
+tinymce_typer/
