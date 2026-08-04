@@ -1,6 +1,22 @@
 import sys
 
 from tinymce_typer.cli.parser import CliError, parse_cli_args
+from tinymce_typer.diagnostics.runner import DiagnosticsRunner
+from tinymce_typer.exceptions import TinyMCETyperError
+from tinymce_typer.logging.setup import configure_logging, get_logger
+
+
+logger = get_logger(__name__)
+
+
+def _print_diagnostics(summary) -> None:
+    for result in summary.results:
+        status = "PASS" if result.passed else "FAIL"
+        print(f"[{status}] {result.name}: {result.message}")
+
+        if result.details:
+            for key, value in result.details.items():
+                print(f"  - {key}: {value}")
 
 
 def main() -> int:
@@ -10,13 +26,22 @@ def main() -> int:
         print(f"Error: {exc}", file=sys.stderr)
         return 2
 
+    configure_logging(config.logging)
+
+    logger.debug("Configuration loaded successfully")
+
+    if config.diagnostics.mode:
+        logger.info("Running diagnostics mode: %s", config.diagnostics.mode)
+        summary = DiagnosticsRunner().run(config)
+        _print_diagnostics(summary)
+        return 0 if summary.passed else 80
+
     try:
         from tinymce_typer.app.typer_app import TyperApp
-    except ImportError as exc:
-        print(
-            "Error: TyperApp is not available yet. Move the existing automation workflow "
-            "into tinymce_typer.app.typer_app before using this thin entry point.",
-            file=sys.stderr,
+    except ImportError:
+        logger.error(
+            "TyperApp is not available yet. Move the existing automation workflow into "
+            "tinymce_typer.app.typer_app before using this thin entry point."
         )
         return 2
 
@@ -24,10 +49,13 @@ def main() -> int:
         app = TyperApp(config)
         result = app.run()
     except KeyboardInterrupt:
-        print("\nScript terminated by user", file=sys.stderr)
+        logger.warning("Script terminated by user")
         return 130
-    except Exception as exc:
-        print(f"Unexpected error: {exc}", file=sys.stderr)
+    except TinyMCETyperError as exc:
+        logger.error("%s", exc)
+        return getattr(exc, "exit_code", 1)
+    except Exception:
+        logger.exception("Unexpected fatal error")
         return 1
 
     if result is None:
@@ -37,6 +65,7 @@ def main() -> int:
         return 0 if result else 1
 
     success = getattr(result, "success", None)
+
     if success is None:
         return 0
 

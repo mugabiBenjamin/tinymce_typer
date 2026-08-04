@@ -16,11 +16,6 @@ venv/
 env/
 ENV/
 tinymce_venv/
-/bin/
-/include/
-/lib/
-/lib64/
-/pyvenv.cfg
 
 # Environment files
 .env
@@ -37,7 +32,6 @@ browser_profiles/
 logs/
 *.trace
 screenshots/
-diagnostics/
 
 # Test and coverage artifacts
 .coverage
@@ -66,6 +60,3 @@ Thumbs.db
 
 # Generated repository exports
 *repomix-output.xml
-
-# Local generated package/module copies
-tinymce_typer/
