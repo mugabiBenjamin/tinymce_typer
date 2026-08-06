@@ -76,6 +76,7 @@ class ContentConfig:
     file: str
     files: list[str] = field(default_factory=list)
     file_separator: str = "\n\n"
+    include_file_headings: bool = False
 
 
 @dataclass(frozen=True)
@@ -106,7 +107,8 @@ class AppConfig:
                 file=str(data["file"]),
                 files=[str(item) for item in data.get("files", [])],
                 file_separator=str(data.get("file_separator", "\n\n")),
-            ),
+                include_file_headings=bool(data.get("include_file_headings", False)),
+),
             browser=BrowserConfig(
                 browser=data.get("browser", "chrome"),
                 profile=str(data.get("profile", "")),
@@ -225,6 +227,7 @@ class AppConfig:
             file=self.content.file,
             files=self.content.files,
             file_separator=self.content.file_separator,
+            include_file_headings=self.content.include_file_headings,
             browser=self.browser.browser,
             profile=self.browser.profile,
             use_existing=self.browser.use_existing,

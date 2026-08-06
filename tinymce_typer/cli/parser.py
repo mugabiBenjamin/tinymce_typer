@@ -239,6 +239,12 @@ def build_parser(defaults: dict | None = None) -> argparse.ArgumentParser:
         default=_str_default(defaults, "file_separator", "\n\n"),
         help="Separator to place between multiple input files",
     )
+    parser.add_argument(
+        "--include-file-headings",
+        action="store_true",
+        default=_bool_default(defaults, "include_file_headings"),
+        help="Add a heading before each file when merging multiple files",
+    )
 
     parser.add_argument(
         "--yes",

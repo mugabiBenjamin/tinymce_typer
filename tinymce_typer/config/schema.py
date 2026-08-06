@@ -40,6 +40,7 @@ CONFIG_KEYS = {
     "verbose",
     "quiet",
     "diagnostics",
+    "include_file_headings",
 }
 
 
@@ -80,6 +81,7 @@ ENV_KEY_MAP = {
     "TINYMCE_TYPER_VERBOSE": "verbose",
     "TINYMCE_TYPER_QUIET": "quiet",
     "TINYMCE_TYPER_DIAGNOSTICS": "diagnostics",
+    "TINYMCE_TYPER_INCLUDE_FILE_HEADINGS": "include_file_headings",
 }
 
 
@@ -102,6 +104,7 @@ BOOL_KEYS = {
     "non_interactive",
     "verbose",
     "quiet",
+    "include_file_headings",
 }
 
 
