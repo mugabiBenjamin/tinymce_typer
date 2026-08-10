@@ -26,6 +26,9 @@ class BrowserConfig:
     force_navigation: bool = False
     close_on_complete: bool = False
     keep_browser_open: bool = True
+    detach: bool = False
+    browser_wait_timeout_seconds: int = 0
+    implicit_wait_seconds: int = 10
 
 
 @dataclass(frozen=True)
@@ -108,7 +111,7 @@ class AppConfig:
                 files=[str(item) for item in data.get("files", [])],
                 file_separator=str(data.get("file_separator", "\n\n")),
                 include_file_headings=bool(data.get("include_file_headings", False)),
-),
+            ),
             browser=BrowserConfig(
                 browser=data.get("browser", "chrome"),
                 profile=str(data.get("profile", "")),
@@ -118,6 +121,9 @@ class AppConfig:
                 force_navigation=bool(data.get("force_navigation", False)),
                 close_on_complete=bool(data.get("close_on_complete", False)),
                 keep_browser_open=bool(data.get("keep_browser_open", True)),
+                detach=bool(data.get("detach", False)),
+                browser_wait_timeout_seconds=int(data.get("browser_wait_timeout_seconds", 0)),
+                implicit_wait_seconds=int(data.get("implicit_wait_seconds", 10)),
             ),
             editor=EditorConfig(
                 iframe_id=str(data.get("iframe_id", "")),
@@ -221,6 +227,15 @@ class AppConfig:
         if self.diagnostics.mode not in {"", "all", "browser", "clipboard", "editor", "file", "session"}:
             raise ConfigError("Diagnostics mode must be one of: all, browser, clipboard, editor, file, session.")
 
+        if self.browser.detach and self.browser.close_on_complete:
+            raise ConfigError("Use either detach or close-on-complete, not both.")
+
+        if self.browser.browser_wait_timeout_seconds < 0:
+            raise ConfigError("Browser wait timeout cannot be negative.")
+
+        if self.browser.implicit_wait_seconds < 0:
+            raise ConfigError("Implicit wait seconds cannot be negative.")
+
     def to_legacy_namespace(self) -> SimpleNamespace:
         return SimpleNamespace(
             url=self.content.url,
@@ -230,6 +245,9 @@ class AppConfig:
             include_file_headings=self.content.include_file_headings,
             browser=self.browser.browser,
             profile=self.browser.profile,
+            detach=self.browser.detach,
+            browser_wait_timeout_seconds=self.browser.browser_wait_timeout_seconds,
+            implicit_wait_seconds=self.browser.implicit_wait_seconds,
             use_existing=self.browser.use_existing,
             debugging_port=self.browser.debugging_port,
             marionette_port=self.browser.marionette_port,
