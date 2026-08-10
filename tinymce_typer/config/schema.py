@@ -41,6 +41,9 @@ CONFIG_KEYS = {
     "quiet",
     "diagnostics",
     "include_file_headings",
+    "detach",
+    "browser_wait_timeout_seconds",
+    "implicit_wait_seconds",
 }
 
 
@@ -82,6 +85,9 @@ ENV_KEY_MAP = {
     "TINYMCE_TYPER_QUIET": "quiet",
     "TINYMCE_TYPER_DIAGNOSTICS": "diagnostics",
     "TINYMCE_TYPER_INCLUDE_FILE_HEADINGS": "include_file_headings",
+    "TINYMCE_TYPER_DETACH": "detach",
+    "TINYMCE_TYPER_BROWSER_WAIT_TIMEOUT_SECONDS": "browser_wait_timeout_seconds",
+    "TINYMCE_TYPER_IMPLICIT_WAIT_SECONDS": "implicit_wait_seconds",
 }
 
 
@@ -105,6 +111,7 @@ BOOL_KEYS = {
     "verbose",
     "quiet",
     "include_file_headings",
+    "detach",
 }
 
 
@@ -113,6 +120,8 @@ INT_KEYS = {
     "marionette_port",
     "editor_index",
     "batch_size",
+    "browser_wait_timeout_seconds",
+    "implicit_wait_seconds",
 }
 
 

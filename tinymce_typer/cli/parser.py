@@ -265,10 +265,32 @@ def build_parser(defaults: dict | None = None) -> argparse.ArgumentParser:
         help="Close the browser after successful completion",
     )
     parser.add_argument(
+        "--keep-open",
         "--keep-browser-open",
+        dest="keep_browser_open",
         action="store_true",
         default=_bool_default(defaults, "keep_browser_open", True),
         help="Keep the browser open after completion",
+    )
+    parser.add_argument(
+        "--detach",
+        action="store_true",
+        default=_bool_default(defaults, "detach"),
+        help="Detach from the browser session without closing it",
+    )
+    parser.add_argument(
+        "--browser-wait-timeout",
+        dest="browser_wait_timeout_seconds",
+        type=int,
+        default=_int_default(defaults, "browser_wait_timeout_seconds", 0),
+        help="Seconds to keep the browser open before closing. Use 0 to wait until interrupted.",
+    )
+    parser.add_argument(
+        "--implicit-wait",
+        dest="implicit_wait_seconds",
+        type=int,
+        default=_int_default(defaults, "implicit_wait_seconds", 10),
+        help="Selenium implicit wait in seconds",
     )
 
     parser.add_argument(
