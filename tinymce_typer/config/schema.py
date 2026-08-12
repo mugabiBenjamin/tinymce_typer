@@ -47,6 +47,9 @@ CONFIG_KEYS = {
     "browser_wait_timeout_seconds",
     "implicit_wait_seconds",
     "force_resume_url",
+    "verification_report",
+    "verification_report_dir",
+    "screenshot_on_verification_failure",
 }
 
 
@@ -94,6 +97,9 @@ ENV_KEY_MAP = {
     "TINYMCE_TYPER_BROWSER_WAIT_TIMEOUT_SECONDS": "browser_wait_timeout_seconds",
     "TINYMCE_TYPER_IMPLICIT_WAIT_SECONDS": "implicit_wait_seconds",
     "TINYMCE_TYPER_FORCE_RESUME_URL": "force_resume_url",
+    "TINYMCE_TYPER_VERIFICATION_REPORT": "verification_report",
+    "TINYMCE_TYPER_VERIFICATION_REPORT_DIR": "verification_report_dir",
+    "TINYMCE_TYPER_SCREENSHOT_ON_VERIFICATION_FAILURE": "screenshot_on_verification_failure",
 }
 
 
@@ -120,6 +126,8 @@ BOOL_KEYS = {
     "include_file_headings",
     "detach",
     "force_resume_url",
+    "verification_report",
+    "screenshot_on_verification_failure",
 }
 
 
