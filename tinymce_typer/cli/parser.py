@@ -147,6 +147,24 @@ def build_parser(defaults: dict | None = None) -> argparse.ArgumentParser:
         default=_float_default(defaults, "batch_delay", 0.1),
         help="Delay between batch insertions",
     )
+    parser.add_argument(
+        "--strategy",
+        choices=["auto", "clipboard", "direct-html", "character", "batch"],
+        default=_str_default(defaults, "strategy", "auto"),
+        help="Insertion strategy to use",
+    )
+    parser.add_argument(
+        "--real-keystrokes",
+        action="store_true",
+        default=_bool_default(defaults, "real_keystrokes", True),
+        help="Use Selenium send_keys for character strategy",
+    )
+    parser.add_argument(
+        "--dom-incremental",
+        dest="real_keystrokes",
+        action="store_false",
+        help="Use incremental DOM insertion instead of real send_keys for character strategy",
+    )
 
     parser.add_argument(
         "--no-session",
