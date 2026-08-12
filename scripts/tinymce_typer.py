@@ -58,18 +58,17 @@ def main() -> int:
         logger.exception("Unexpected fatal error")
         return 1
 
-    if result is None:
-        return 0
+    exit_code = getattr(result, "exit_code", None)
 
-    if isinstance(result, bool):
-        return 0 if result else 1
+    if isinstance(exit_code, int):
+        return exit_code
 
     success = getattr(result, "success", None)
 
-    if success is None:
-        return 0
+    if isinstance(success, bool):
+        return 0 if success else 1
 
-    return 0 if success else 1
+    return 0
 
 
 if __name__ == "__main__":
