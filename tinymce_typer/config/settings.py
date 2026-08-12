@@ -61,6 +61,7 @@ class SessionConfig:
     no_resume: bool = False
     encrypt: bool = False
     session_file: str = "tinymce_session.json"
+    force_resume_url: bool = False
 
 
 @dataclass(frozen=True)
@@ -152,6 +153,7 @@ class AppConfig:
                 no_resume=bool(data.get("no_resume", False)),
                 encrypt=bool(data.get("encrypt", False)),
                 session_file=str(data.get("session_file", "tinymce_session.json")),
+                force_resume_url=bool(data.get("force_resume_url", False)),
             ),
             verification=VerificationConfig(
                 no_verification=bool(data.get("no_verification", False)),
@@ -247,6 +249,15 @@ class AppConfig:
         if self.insertion.strategy == "clipboard" and self.insertion.no_clipboard:
             raise ConfigError("Cannot use strategy=clipboard together with no-clipboard.")
 
+        if self.session.reset and self.session.resume:
+            raise ConfigError("Use either reset or resume, not both.")
+
+        if self.session.no_session and self.session.resume:
+            raise ConfigError("Cannot resume when sessions are disabled.")
+
+        if self.session.no_session and self.session.encrypt:
+            raise ConfigError("Cannot encrypt sessions when sessions are disabled.")
+
     def to_legacy_namespace(self) -> SimpleNamespace:
         return SimpleNamespace(
             url=self.content.url,
@@ -294,4 +305,5 @@ class AppConfig:
             verbose=self.logging.verbose,
             quiet=self.logging.quiet,
             diagnostics=self.diagnostics.mode,
+            force_resume_url=self.session.force_resume_url,
         )

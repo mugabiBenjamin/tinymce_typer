@@ -46,6 +46,7 @@ CONFIG_KEYS = {
     "detach",
     "browser_wait_timeout_seconds",
     "implicit_wait_seconds",
+    "force_resume_url",
 }
 
 
@@ -92,6 +93,7 @@ ENV_KEY_MAP = {
     "TINYMCE_TYPER_DETACH": "detach",
     "TINYMCE_TYPER_BROWSER_WAIT_TIMEOUT_SECONDS": "browser_wait_timeout_seconds",
     "TINYMCE_TYPER_IMPLICIT_WAIT_SECONDS": "implicit_wait_seconds",
+    "TINYMCE_TYPER_FORCE_RESUME_URL": "force_resume_url",
 }
 
 
@@ -117,6 +119,7 @@ BOOL_KEYS = {
     "quiet",
     "include_file_headings",
     "detach",
+    "force_resume_url",
 }
 
 
