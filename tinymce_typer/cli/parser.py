@@ -366,6 +366,25 @@ def build_parser(defaults: dict | None = None) -> argparse.ArgumentParser:
         help="Run diagnostics instead of full content insertion",
     )
 
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        default=_bool_default(defaults, "json"),
+        help="Write final output as JSON",
+    )
+    parser.add_argument(
+        "--output-mode",
+        choices=["terminal", "json"],
+        default=_str_default(defaults, "output_mode", "terminal"),
+        help="Final output format",
+    )
+    parser.add_argument(
+        "--quiet-progress",
+        action="store_true",
+        default=_bool_default(defaults, "quiet_progress"),
+        help="Disable progress output",
+    )
+
     return parser
 
 

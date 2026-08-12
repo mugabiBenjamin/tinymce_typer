@@ -50,6 +50,9 @@ CONFIG_KEYS = {
     "verification_report",
     "verification_report_dir",
     "screenshot_on_verification_failure",
+    "json",
+    "output_mode",
+    "quiet_progress",
 }
 
 
@@ -100,6 +103,9 @@ ENV_KEY_MAP = {
     "TINYMCE_TYPER_VERIFICATION_REPORT": "verification_report",
     "TINYMCE_TYPER_VERIFICATION_REPORT_DIR": "verification_report_dir",
     "TINYMCE_TYPER_SCREENSHOT_ON_VERIFICATION_FAILURE": "screenshot_on_verification_failure",
+    "TINYMCE_TYPER_JSON": "json",
+    "TINYMCE_TYPER_OUTPUT_MODE": "output_mode",
+    "TINYMCE_TYPER_QUIET_PROGRESS": "quiet_progress",
 }
 
 
@@ -128,6 +134,8 @@ BOOL_KEYS = {
     "force_resume_url",
     "verification_report",
     "screenshot_on_verification_failure",
+    "json",
+    "quiet_progress",
 }
 
 

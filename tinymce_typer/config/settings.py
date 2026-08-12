@@ -10,6 +10,7 @@ from tinymce_typer.logging.setup import LoggingConfig as RuntimeLoggingConfig
 BrowserName = Literal["chrome", "firefox"]
 VerificationMode = Literal["normalized-text", "exact-text", "html"]
 DiagnosticsMode = Literal["", "all", "browser", "clipboard", "editor", "file", "session"]
+OutputMode = Literal["terminal", "json"]
 
 
 class ConfigError(Exception):
@@ -40,7 +41,6 @@ class EditorConfig:
     wait_selector: str = ""
 
 
-@dataclass(frozen=True)
 @dataclass(frozen=True)
 class InsertionConfig:
     type_delay: float = 0.01
@@ -93,6 +93,10 @@ class ContentConfig:
 class DiagnosticsConfig:
     mode: DiagnosticsMode = ""
 
+@dataclass(frozen=True)
+class OutputConfig:
+    mode: OutputMode = "terminal"
+    quiet_progress: bool = False
 
 @dataclass(frozen=True)
 class AppConfig:
@@ -105,6 +109,7 @@ class AppConfig:
     cli: CliBehaviorConfig = field(default_factory=CliBehaviorConfig)
     logging: RuntimeLoggingConfig = field(default_factory=RuntimeLoggingConfig)
     diagnostics: DiagnosticsConfig = field(default_factory=DiagnosticsConfig)
+    output: OutputConfig = field(default_factory=OutputConfig)
     config_path: str = ""
 
     @classmethod
@@ -178,6 +183,10 @@ class AppConfig:
             ),
             diagnostics=DiagnosticsConfig(
                 mode=str(data.get("diagnostics", "")),
+            ),
+            output=OutputConfig(
+                mode="json" if bool(data.get("json", False)) else str(data.get("output_mode", "terminal")),
+                quiet_progress=bool(data.get("quiet_progress", False)),
             ),
             config_path=str(data.get("config", "")),
         )
@@ -270,6 +279,12 @@ class AppConfig:
         if self.verification.screenshot_on_verification_failure and self.verification.no_verification:
             raise ConfigError("Cannot capture verification failure screenshots when verification is disabled.")
 
+        if self.output.mode not in {"terminal", "json"}:
+            raise ConfigError("Output mode must be terminal or json.")
+
+        if self.output.mode == "json" and not self.output.quiet_progress:
+            raise ConfigError("JSON output requires quiet progress so stdout remains machine-readable.")
+
     def to_legacy_namespace(self) -> SimpleNamespace:
         return SimpleNamespace(
             url=self.content.url,
@@ -321,4 +336,7 @@ class AppConfig:
             verification_report=self.verification.verification_report,
             verification_report_dir=self.verification.verification_report_dir,
             screenshot_on_verification_failure=self.verification.screenshot_on_verification_failure,
+            json=self.output.mode == "json",
+            output_mode=self.output.mode,
+            quiet_progress=self.output.quiet_progress,
         )
