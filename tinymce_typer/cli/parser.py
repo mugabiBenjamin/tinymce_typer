@@ -228,6 +228,24 @@ def build_parser(defaults: dict | None = None) -> argparse.ArgumentParser:
     )
 
     parser.add_argument(
+        "--verification-report",
+        action="store_true",
+        default=_bool_default(defaults, "verification_report"),
+        help="Write a verification report when verification fails",
+    )
+    parser.add_argument(
+        "--verification-report-dir",
+        default=_str_default(defaults, "verification_report_dir", "diagnostics/verification"),
+        help="Directory where verification artifacts should be written",
+    )
+    parser.add_argument(
+        "--screenshot-on-verification-failure",
+        action="store_true",
+        default=_bool_default(defaults, "screenshot_on_verification_failure"),
+        help="Capture a browser screenshot when verification fails",
+    )
+
+    parser.add_argument(
         "--use-existing",
         action="store_true",
         default=_bool_default(defaults, "use_existing"),

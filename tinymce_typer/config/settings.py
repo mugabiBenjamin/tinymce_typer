@@ -69,6 +69,9 @@ class VerificationConfig:
     no_verification: bool = False
     verification_mode: VerificationMode = "normalized-text"
     verification_threshold: float = 0.90
+    verification_report: bool = False
+    verification_report_dir: str = "diagnostics/verification"
+    screenshot_on_verification_failure: bool = False
 
 
 @dataclass(frozen=True)
@@ -159,6 +162,9 @@ class AppConfig:
                 no_verification=bool(data.get("no_verification", False)),
                 verification_mode=data.get("verification_mode", "normalized-text"),
                 verification_threshold=float(data.get("verification_threshold", 0.90)),
+                verification_report=bool(data.get("verification_report", False)),
+                verification_report_dir=str(data.get("verification_report_dir", "diagnostics/verification")),
+                screenshot_on_verification_failure=bool(data.get("screenshot_on_verification_failure", False)),
             ),
             cli=CliBehaviorConfig(
                 yes=bool(data.get("yes", False)),
@@ -258,6 +264,12 @@ class AppConfig:
         if self.session.no_session and self.session.encrypt:
             raise ConfigError("Cannot encrypt sessions when sessions are disabled.")
 
+        if not self.verification.verification_report_dir.strip():
+            raise ConfigError("Verification report directory cannot be empty.")
+
+        if self.verification.screenshot_on_verification_failure and self.verification.no_verification:
+            raise ConfigError("Cannot capture verification failure screenshots when verification is disabled.")
+
     def to_legacy_namespace(self) -> SimpleNamespace:
         return SimpleNamespace(
             url=self.content.url,
@@ -306,4 +318,7 @@ class AppConfig:
             quiet=self.logging.quiet,
             diagnostics=self.diagnostics.mode,
             force_resume_url=self.session.force_resume_url,
+            verification_report=self.verification.verification_report,
+            verification_report_dir=self.verification.verification_report_dir,
+            screenshot_on_verification_failure=self.verification.screenshot_on_verification_failure,
         )
