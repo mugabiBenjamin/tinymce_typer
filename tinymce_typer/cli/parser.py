@@ -201,6 +201,12 @@ def build_parser(defaults: dict | None = None) -> argparse.ArgumentParser:
         default=_str_default(defaults, "session_file", "tinymce_session.json"),
         help="Path to the session file",
     )
+    parser.add_argument(
+        "--force-resume-url",
+        action="store_true",
+        default=_bool_default(defaults, "force_resume_url"),
+        help="Allow resume even when saved session URL differs from the current URL",
+    )
 
     parser.add_argument(
         "--no-verification",

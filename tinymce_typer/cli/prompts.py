@@ -114,3 +114,19 @@ class PromptManager:
             f"Current page differs from target URL.\nCurrent: {current_url}\nTarget: {target_url}\nNavigate to target URL?",
             default=False,
         )
+
+    def confirm_resume_warnings(self, warnings: Sequence[str]) -> bool:
+        if not warnings:
+            return True
+
+        if self.assume_yes:
+            return True
+
+        if self.non_interactive:
+            return False
+
+        print("Resume has warnings:")
+        for warning in warnings:
+            print(f"- {warning}")
+
+        return self.confirm("Resume anyway?", default=False)
