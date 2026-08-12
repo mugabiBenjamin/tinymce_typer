@@ -41,6 +41,7 @@ class EditorConfig:
 
 
 @dataclass(frozen=True)
+@dataclass(frozen=True)
 class InsertionConfig:
     type_delay: float = 0.01
     formatted: bool = False
@@ -48,6 +49,8 @@ class InsertionConfig:
     batch: bool = False
     batch_size: int = 50
     batch_delay: float = 0.1
+    strategy: Literal["auto", "clipboard", "direct-html", "character", "batch"] = "auto"
+    real_keystrokes: bool = True
 
 
 @dataclass(frozen=True)
@@ -139,6 +142,8 @@ class AppConfig:
                 batch=bool(data.get("batch", False)),
                 batch_size=int(data.get("batch_size", 50)),
                 batch_delay=float(data.get("batch_delay", 0.1)),
+                strategy=data.get("strategy", "auto"),
+                real_keystrokes=bool(data.get("real_keystrokes", True)),
             ),
             session=SessionConfig(
                 no_session=bool(data.get("no_session", False)),
@@ -236,6 +241,12 @@ class AppConfig:
         if self.browser.implicit_wait_seconds < 0:
             raise ConfigError("Implicit wait seconds cannot be negative.")
 
+        if self.insertion.strategy not in {"auto", "clipboard", "direct-html", "character", "batch"}:
+            raise ConfigError("Insertion strategy must be one of: auto, clipboard, direct-html, character, batch.")
+
+        if self.insertion.strategy == "clipboard" and self.insertion.no_clipboard:
+            raise ConfigError("Cannot use strategy=clipboard together with no-clipboard.")
+
     def to_legacy_namespace(self) -> SimpleNamespace:
         return SimpleNamespace(
             url=self.content.url,
@@ -263,6 +274,8 @@ class AppConfig:
             batch=self.insertion.batch,
             batch_size=self.insertion.batch_size,
             batch_delay=self.insertion.batch_delay,
+            strategy=self.insertion.strategy,
+            real_keystrokes=self.insertion.real_keystrokes,
             no_session=self.session.no_session,
             reset=self.session.reset,
             resume=self.session.resume,
