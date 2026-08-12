@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from tinymce_typer.config.settings import AppConfig
+from tinymce_typer.editors.detector import EditorDetector
 
 
 @dataclass(frozen=True)
@@ -13,26 +14,51 @@ class EditorDiagnosticResult:
 
 
 class EditorDiagnostic:
+    def __init__(self, detector: EditorDetector | None = None):
+        self.detector = detector or EditorDetector()
+
     def run_static(self, config: AppConfig) -> list[EditorDiagnosticResult]:
-        results = [
+        return [
             self._check_editor_selectors(config),
             self._check_non_interactive_editor_selection(config),
         ]
-
-        return results
 
     def run_with_driver(self, driver: Any, config: AppConfig) -> list[EditorDiagnosticResult]:
         results = self.run_static(config)
 
         try:
-            detected = self._detect_editor_candidates(driver)
-            results.append(detected)
+            detection = self.detector.detect(driver, config.editor)
         except Exception as exc:
             results.append(
                 EditorDiagnosticResult(
                     name="editor_detection",
                     passed=False,
                     message=f"Editor detection failed: {exc}",
+                    details={},
+                )
+            )
+            return results
+
+        details = {
+            f"candidate_{index + 1}": f"{candidate.kind.value} | {candidate.support_level.value} | {candidate.label}"
+            for index, candidate in enumerate(detection.candidates)
+        }
+
+        if detection.found:
+            results.append(
+                EditorDiagnosticResult(
+                    name="editor_detection",
+                    passed=True,
+                    message=f"Detected {detection.count} possible editor target(s)",
+                    details=details,
+                )
+            )
+        else:
+            results.append(
+                EditorDiagnosticResult(
+                    name="editor_detection",
+                    passed=False,
+                    message="No editor candidates were detected on the current page",
                     details={},
                 )
             )
@@ -96,35 +122,4 @@ class EditorDiagnostic:
             passed=False,
             message="Non-interactive mode may fail if multiple editors are detected; provide --editor-index, --iframe-id, or --editor-id",
             details={},
-        )
-
-    def _detect_editor_candidates(self, driver: Any) -> EditorDiagnosticResult:
-        selectors = {
-            "tinymce_iframes": "iframe[id$='_ifr'], iframe#tinymce_ifr, div.mce-edit-area iframe, div.tox-edit-area__iframe",
-            "ckeditor_frames": "iframe.cke_wysiwyg_frame",
-            "quill_editors": ".ql-editor",
-            "contenteditable": "[contenteditable='true']",
-        }
-
-        counts: dict[str, str] = {}
-
-        for name, selector in selectors.items():
-            elements = driver.find_elements("css selector", selector)
-            counts[name] = str(len(elements))
-
-        total = sum(int(value) for value in counts.values())
-
-        if total > 0:
-            return EditorDiagnosticResult(
-                name="editor_detection",
-                passed=True,
-                message=f"Detected {total} possible editor target(s)",
-                details=counts,
-            )
-
-        return EditorDiagnosticResult(
-            name="editor_detection",
-            passed=False,
-            message="No editor candidates were detected on the current page",
-            details=counts,
         )
