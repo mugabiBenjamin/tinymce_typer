@@ -5,7 +5,7 @@ from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.common.keys import Keys
 
 from tinymce_typer.exceptions import ClipboardError, InsertionError
-from tinymce_typer.insertion.base import InsertionContext, InsertionResult, InsertionStrategyError
+from tinymce_typer.insertion.base import InsertionContext, InsertionResult
 from tinymce_typer.logging.setup import get_logger
 
 
