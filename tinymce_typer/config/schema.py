@@ -4,6 +4,7 @@ ENV_PREFIX = "TINYMCE_TYPER_"
 
 CONFIG_KEYS = {
     "browser",
+    "headless",
     "profile",
     "use_existing",
     "debugging_port",
@@ -58,6 +59,7 @@ CONFIG_KEYS = {
 
 ENV_KEY_MAP = {
     "TINYMCE_TYPER_BROWSER": "browser",
+    "TINYMCE_TYPER_HEADLESS": "headless",
     "TINYMCE_TYPER_BROWSER_PROFILE": "profile",
     "TINYMCE_TYPER_USE_EXISTING": "use_existing",
     "TINYMCE_TYPER_DEBUGGING_PORT": "debugging_port",
@@ -110,6 +112,7 @@ ENV_KEY_MAP = {
 
 
 BOOL_KEYS = {
+    "headless",
     "use_existing",
     "force_navigation",
     "close_on_complete",

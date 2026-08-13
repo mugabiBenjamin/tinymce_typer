@@ -28,6 +28,7 @@ class BrowserDiagnostic:
                 details={
                     "errors": "; ".join(validation.errors),
                     "warnings": "; ".join(validation.warnings),
+                    "headless": str(config.browser.headless),
                 },
             )
         )

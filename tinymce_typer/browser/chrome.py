@@ -29,7 +29,13 @@ class ChromeBrowserProvider:
 
     def _start_new(self, config: BrowserConfig) -> BrowserSession:
         options = webdriver.ChromeOptions()
-        options.add_argument("--start-maximized")
+
+        if config.headless:
+            options.add_argument("--headless=new")
+            options.add_argument("--window-size=1920,1080")
+            options.add_argument("--disable-gpu")
+        else:
+            options.add_argument("--start-maximized")
 
         if config.profile:
             options.add_argument(f"--user-data-dir={config.profile}")
@@ -50,7 +56,6 @@ class ChromeBrowserProvider:
             is_existing_session=False,
             should_quit_driver=True,
         )
-
     def _connect_existing(self, config: BrowserConfig) -> BrowserSession:
         options = webdriver.ChromeOptions()
         options.add_experimental_option("debuggerAddress", f"localhost:{config.debugging_port}")

@@ -20,6 +20,7 @@ class ConfigError(Exception):
 @dataclass(frozen=True)
 class BrowserConfig:
     browser: BrowserName = "chrome"
+    headless: bool = False
     profile: str = ""
     use_existing: bool = False
     debugging_port: int = 9222
@@ -129,6 +130,7 @@ class AppConfig:
             ),
             browser=BrowserConfig(
                 browser=data.get("browser", "chrome"),
+                headless=bool(data.get("headless", False)),
                 profile=str(data.get("profile", "")),
                 use_existing=bool(data.get("use_existing", False)),
                 debugging_port=int(data.get("debugging_port", 9222)),
@@ -214,6 +216,9 @@ class AppConfig:
             if self.browser.marionette_port <= 0 or self.browser.marionette_port > 65535:
                 raise ConfigError("Marionette port must be between 1 and 65535.")
 
+        if self.browser.headless and self.browser.use_existing:
+            raise ConfigError("Headless mode cannot be used when connecting to an existing browser session.")
+
         if self.editor.editor_index is not None and self.editor.editor_index < 1:
             raise ConfigError("Editor index must be 1 or greater.")
 
@@ -293,6 +298,7 @@ class AppConfig:
             file_separator=self.content.file_separator,
             include_file_headings=self.content.include_file_headings,
             browser=self.browser.browser,
+            headless=self.browser.headless,
             profile=self.browser.profile,
             detach=self.browser.detach,
             browser_wait_timeout_seconds=self.browser.browser_wait_timeout_seconds,
