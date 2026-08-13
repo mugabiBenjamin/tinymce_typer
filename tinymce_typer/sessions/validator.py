@@ -43,7 +43,7 @@ class SessionValidator:
 
         if editor_candidate is not None:
             current_editor_kind = editor_candidate.kind.value
-            current_editor_identifier = self._editor_identifier(editor_candidate)
+            current_editor_identifier = self.editor_identifier(editor_candidate)
 
             if session.metadata.editor_kind and session.metadata.editor_kind != current_editor_kind:
                 warnings.append("Saved session editor type differs from current detected editor type.")
@@ -80,7 +80,7 @@ class SessionValidator:
             warnings=(),
         )
 
-    def _editor_identifier(self, candidate: EditorCandidate) -> str:
+    def editor_identifier(self, candidate: EditorCandidate) -> str:
         iframe_id = candidate.metadata.get("iframe_id", "")
         editor_id = candidate.metadata.get("editor_id", "")
         selector = candidate.selector
