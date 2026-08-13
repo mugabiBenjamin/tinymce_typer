@@ -73,7 +73,7 @@ def build_parser(defaults: dict | None = None) -> argparse.ArgumentParser:
 
     parser.add_argument(
         "--browser",
-        choices=["chrome", "firefox"],
+        choices=["chrome", "firefox", "edge"],
         default=_str_default(defaults, "browser", "chrome"),
         help="Browser to use",
     )

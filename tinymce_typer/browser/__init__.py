@@ -1,5 +1,6 @@
 from tinymce_typer.browser.base import BrowserProvider, BrowserSession
 from tinymce_typer.browser.chrome import ChromeBrowserProvider
+from tinymce_typer.browser.edge import EdgeBrowserProvider
 from tinymce_typer.browser.factory import BrowserProviderFactory
 from tinymce_typer.browser.firefox import FirefoxBrowserProvider
 from tinymce_typer.browser.lifecycle import BrowserLifecycleManager
@@ -19,6 +20,7 @@ __all__ = [
     "BrowserProvider",
     "BrowserSession",
     "ChromeBrowserProvider",
+    "EdgeBrowserProvider",
     "FirefoxBrowserProvider",
     "BrowserProviderFactory",
     "BrowserLifecycleManager",

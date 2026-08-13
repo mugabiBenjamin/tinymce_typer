@@ -45,10 +45,10 @@ class BrowserValidator:
                 )
 
         if config.use_existing:
-            if config.browser == "chrome":
+            if config.browser in {"chrome", "edge"}:
                 if not self.is_port_open(config.debugging_port):
                     warnings.append(
-                        f"Chrome remote debugging port {config.debugging_port} is not reachable yet."
+                        f"{config.browser.title()} remote debugging port {config.debugging_port} is not reachable yet."
                     )
 
             if config.browser == "firefox":
@@ -97,6 +97,13 @@ class BrowserValidator:
             if system == "windows":
                 return ("firefox.exe", "firefox")
             return ("firefox",)
+
+        if browser == "edge":
+            if system == "windows":
+                return ("msedge.exe", "msedge", "microsoft-edge")
+            if system == "darwin":
+                return ("microsoft-edge", "msedge")
+            return ("microsoft-edge", "microsoft-edge-stable", "msedge")
 
         return ()
 

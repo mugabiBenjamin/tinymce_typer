@@ -7,7 +7,7 @@ from typing import Literal
 from tinymce_typer.logging.setup import LoggingConfig as RuntimeLoggingConfig
 
 
-BrowserName = Literal["chrome", "firefox"]
+BrowserName = Literal["chrome", "firefox", "edge"]
 VerificationMode = Literal["normalized-text", "exact-text", "html"]
 DiagnosticsMode = Literal["", "all", "browser", "clipboard", "editor", "file", "session"]
 OutputMode = Literal["terminal", "json"]
@@ -206,8 +206,8 @@ class AppConfig:
         if not self.content.file.strip():
             raise ConfigError("Main content file path is required.")
 
-        if self.browser.browser not in {"chrome", "firefox"}:
-            raise ConfigError("Browser must be either 'chrome' or 'firefox'.")
+        if self.browser.browser not in {"chrome", "firefox", "edge"}:
+            raise ConfigError("Browser must be one of: chrome, firefox, edge.")
 
         if self.browser.debugging_port <= 0 or self.browser.debugging_port > 65535:
             raise ConfigError("Debugging port must be between 1 and 65535.")
