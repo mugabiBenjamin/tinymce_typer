@@ -72,6 +72,12 @@ class TyperApp:
                 editor_candidate=editor_candidate,
             )
 
+            self._mark_session_completed(
+                document=document,
+                editor_candidate=editor_candidate,
+                insertion_result=insertion_result,
+            )
+
             output = self._build_output(
                 insertion_result=insertion_result,
                 verification_result=verification_result,
@@ -81,12 +87,6 @@ class TyperApp:
             )
 
             self._write_output(output)
-
-            self._mark_session_completed(
-                document=document,
-                editor_candidate=editor_candidate,
-                insertion_result=insertion_result,
-            )
 
             self.container.browser_lifecycle.handle_completion(browser_session, self.config.browser)
 
@@ -124,6 +124,7 @@ class TyperApp:
                 errors=(str(exc),),
                 metadata={"error_type": exc.__class__.__name__},
             )
+
             self._write_output(output)
 
             return AppResult.fail(
@@ -146,6 +147,7 @@ class TyperApp:
                 errors=(str(exc),),
                 metadata={"error_type": exc.__class__.__name__},
             )
+
             self._write_output(output)
 
             return AppResult.fail(
@@ -179,12 +181,18 @@ class TyperApp:
             store.delete()
             return 0
 
-        if self.config.session.no_resume:
-            return 0
-
         saved_session = store.load()
 
         if saved_session is None:
+            return 0
+
+        should_resume = self.container.prompt_manager.ask_resume(
+            has_saved_session=True,
+            resume=self.config.session.resume,
+            no_resume=self.config.session.no_resume,
+        )
+
+        if not should_resume:
             return 0
 
         validation = self.container.session_validator.validate_resume(
@@ -197,33 +205,15 @@ class TyperApp:
 
         if not validation.allowed:
             reasons = "; ".join(validation.reasons)
-
-            if self.config.session.resume:
-                raise TinyMCETyperError(f"Cannot resume saved session: {reasons}")
-
-            return 0
+            raise TinyMCETyperError(f"Cannot resume saved session: {reasons}")
 
         if validation.warnings:
-            if self.config.session.resume or self.config.cli.yes:
-                return saved_session.progress.offset
-
             confirmed = self.container.prompt_manager.confirm_resume_warnings(validation.warnings)
 
-            if confirmed:
-                return saved_session.progress.offset
+            if not confirmed:
+                return 0
 
-            return 0
-
-        if self.config.session.resume:
-            return saved_session.progress.offset
-
-        if self.config.cli.non_interactive:
-            return 0
-
-        if self.container.prompt_manager.ask_resume():
-            return saved_session.progress.offset
-
-        return 0
+        return saved_session.progress.offset
 
     def _save_progress(
         self,
@@ -243,7 +233,7 @@ class TyperApp:
                 total=progress.total,
                 inserted=progress.inserted,
                 current_file=progress.current_file,
-                current_file_offset=0,
+                current_file_offset=self._current_file_offset(document, progress.offset),
                 completed=False,
                 last_strategy=progress.strategy_name,
             ),
@@ -292,6 +282,14 @@ class TyperApp:
             editor_identifier=self.container.session_validator.editor_identifier(editor_candidate),
         )
 
+    def _current_file_offset(self, document: ContentDocument, offset: int) -> int:
+        context = document.progress_context(offset)
+
+        if not context:
+            return 0
+
+        return int(context.get("offset_in_file", 0))
+
     def _verify(
         self,
         driver,
@@ -332,7 +330,7 @@ class TyperApp:
         duration_seconds: float,
         content_length: int,
     ) -> RunOutput:
-        artifacts = {}
+        artifacts: dict[str, str] = {}
 
         if verification_result is not None:
             artifacts = {
@@ -362,6 +360,3 @@ class TyperApp:
 
         if callable(write):
             write(output)
-
-    def _editor_identifier(self, candidate: EditorCandidate) -> str:
-        return self.editor_identifier(candidate)
