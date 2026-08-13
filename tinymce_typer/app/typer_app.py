@@ -1,10 +1,4 @@
 import time
-from dataclasses import replace
-
-from selenium.common.exceptions import WebDriverException
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as expected
-from selenium.webdriver.support.ui import WebDriverWait
 
 from tinymce_typer.app.container import AppContainer, AppContainerFactory
 from tinymce_typer.app.result import AppResult
@@ -12,14 +6,10 @@ from tinymce_typer.config.settings import AppConfig
 from tinymce_typer.content.formatter import FormatMode
 from tinymce_typer.content.models import ContentDocument, FormattedContent
 from tinymce_typer.editors.models import EditorCandidate
-from tinymce_typer.exceptions import (
-    BrowserNavigationError,
-    TinyMCETyperError,
-)
+from tinymce_typer.exceptions import TinyMCETyperError
 from tinymce_typer.insertion.base import InsertionContext, InsertionProgress, InsertionResult
 from tinymce_typer.output.models import RunOutput
 from tinymce_typer.sessions.models import SessionMetadata, SessionProgress, SessionState
-from tinymce_typer.sessions.validator import SessionValidator
 from tinymce_typer.verification.models import VerificationResult
 
 
@@ -43,7 +33,12 @@ class TyperApp:
             browser_session = self.container.browser_provider.start(self.config.browser)
             driver = browser_session.driver
 
-            self._navigate(driver)
+            self.container.browser_navigator.navigate(
+                driver=driver,
+                browser_config=self.config.browser,
+                content_config=self.config.content,
+                editor_config=self.config.editor,
+            )
 
             editor_candidate = self.container.editor_detector.find_and_focus(driver, self.config.editor)
             editor_adapter = self.container.editor_detector.adapter_for(editor_candidate)
@@ -111,6 +106,7 @@ class TyperApp:
             duration = time.monotonic() - started_at
             self.container.progress_reporter.fail("Interrupted by user")
             self.container.browser_lifecycle.handle_failure(browser_session, self.config.browser)
+
             return AppResult.fail(
                 message="Interrupted by user.",
                 exit_code=130,
@@ -169,23 +165,6 @@ class TyperApp:
 
         return self.container.content_formatter.format_document(document, mode=mode)
 
-    def _navigate(self, driver) -> None:
-        try:
-            if self.config.browser.use_existing and not self.config.browser.force_navigation:
-                return
-
-            driver.get(self.config.content.url)
-
-            if self.config.editor.wait_selector:
-                wait = WebDriverWait(driver, max(1, self.config.browser.implicit_wait_seconds))
-                wait.until(
-                    expected.presence_of_element_located(
-                        (By.CSS_SELECTOR, self.config.editor.wait_selector)
-                    )
-                )
-        except WebDriverException as exc:
-            raise BrowserNavigationError(f"Could not navigate to page: {exc}") from exc
-
     def _resolve_resume_offset(
         self,
         document: ContentDocument,
@@ -218,14 +197,33 @@ class TyperApp:
 
         if not validation.allowed:
             reasons = "; ".join(validation.reasons)
+
             if self.config.session.resume:
                 raise TinyMCETyperError(f"Cannot resume saved session: {reasons}")
+
             return 0
 
-        if validation.warnings and not self.config.session.resume:
+        if validation.warnings:
+            if self.config.session.resume or self.config.cli.yes:
+                return saved_session.progress.offset
+
+            confirmed = self.container.prompt_manager.confirm_resume_warnings(validation.warnings)
+
+            if confirmed:
+                return saved_session.progress.offset
+
             return 0
 
-        return saved_session.progress.offset
+        if self.config.session.resume:
+            return saved_session.progress.offset
+
+        if self.config.cli.non_interactive:
+            return 0
+
+        if self.container.prompt_manager.ask_resume():
+            return saved_session.progress.offset
+
+        return 0
 
     def _save_progress(
         self,
@@ -291,7 +289,7 @@ class TyperApp:
             content_hash=document.content_hash,
             insertion_strategy=strategy_name,
             editor_kind=editor_candidate.kind.value,
-            editor_identifier=SessionValidator()._editor_identifier(editor_candidate),
+            editor_identifier=self.container.session_validator.editor_identifier(editor_candidate),
         )
 
     def _verify(
@@ -347,7 +345,7 @@ class TyperApp:
             result=insertion_result,
             duration_seconds=duration_seconds,
             editor_type=editor_candidate.kind.value,
-            editor_identifier=SessionValidator()._editor_identifier(editor_candidate),
+            editor_identifier=self.container.session_validator.editor_identifier(editor_candidate),
             content_length=content_length,
             verification=verification_result,
             session_file="" if self.config.session.no_session else self.config.session.session_file,
@@ -364,3 +362,6 @@ class TyperApp:
 
         if callable(write):
             write(output)
+
+    def _editor_identifier(self, candidate: EditorCandidate) -> str:
+        return self.editor_identifier(candidate)

@@ -3,10 +3,12 @@ from getpass import getpass
 
 from tinymce_typer.browser.factory import BrowserProviderFactory
 from tinymce_typer.browser.lifecycle import BrowserLifecycleManager
+from tinymce_typer.browser.navigation import BrowserNavigator
+from tinymce_typer.cli.prompts import PromptManager
 from tinymce_typer.config.settings import AppConfig
 from tinymce_typer.content.formatter import ContentFormatter
 from tinymce_typer.content.loader import ContentLoader
-from tinymce_typer.contracts.browser import BrowserLifecycleProtocol, BrowserProviderProtocol
+from tinymce_typer.contracts.browser import BrowserLifecycleProtocol, BrowserNavigatorProtocol, BrowserProviderProtocol
 from tinymce_typer.contracts.editor import EditorDetectorProtocol
 from tinymce_typer.contracts.insertion import InsertionStrategyChainProtocol
 from tinymce_typer.contracts.progress import ProgressReporterProtocol
@@ -28,6 +30,7 @@ from tinymce_typer.verification.verifier import VerificationService
 class AppContainer:
     browser_provider: BrowserProviderProtocol
     browser_lifecycle: BrowserLifecycleProtocol
+    browser_navigator: BrowserNavigatorProtocol
     content_loader: ContentLoader
     content_formatter: ContentFormatter
     editor_detector: EditorDetectorProtocol
@@ -37,6 +40,7 @@ class AppContainer:
     verification_service: VerificationServiceProtocol
     verification_reporter: VerificationReporterProtocol
     progress_reporter: ProgressReporterProtocol
+    prompt_manager: PromptManager
     output_writer: object
 
 
@@ -47,6 +51,7 @@ class AppContainerFactory:
         return AppContainer(
             browser_provider=BrowserProviderFactory().create(config.browser),
             browser_lifecycle=BrowserLifecycleManager(),
+            browser_navigator=BrowserNavigator(),
             content_loader=ContentLoader(),
             content_formatter=ContentFormatter(),
             editor_detector=EditorDetector(),
@@ -56,6 +61,10 @@ class AppContainerFactory:
             verification_service=VerificationService(),
             verification_reporter=VerificationReporter(config.verification.verification_report_dir),
             progress_reporter=self._build_progress_reporter(config),
+            prompt_manager=PromptManager(
+                assume_yes=config.cli.yes,
+                non_interactive=config.cli.non_interactive,
+            ),
             output_writer=self._build_output_writer(config),
         )
 

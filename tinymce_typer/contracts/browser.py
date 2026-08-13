@@ -1,6 +1,6 @@
 from typing import Any, Protocol
 
-from tinymce_typer.config.settings import BrowserConfig
+from tinymce_typer.config.settings import BrowserConfig, ContentConfig, EditorConfig
 
 
 class BrowserSessionProtocol(Protocol):
@@ -25,4 +25,15 @@ class BrowserLifecycleProtocol(Protocol):
         ...
 
     def close(self, session: BrowserSessionProtocol) -> None:
+        ...
+
+
+class BrowserNavigatorProtocol(Protocol):
+    def navigate(
+        self,
+        driver: Any,
+        browser_config: BrowserConfig,
+        content_config: ContentConfig,
+        editor_config: EditorConfig,
+    ) -> None:
         ...
