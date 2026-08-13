@@ -2,6 +2,7 @@ from tinymce_typer.browser.base import BrowserProvider
 from tinymce_typer.browser.chrome import ChromeBrowserProvider
 from tinymce_typer.browser.edge import EdgeBrowserProvider
 from tinymce_typer.browser.firefox import FirefoxBrowserProvider
+from tinymce_typer.browser.remote import RemoteBrowserProvider
 from tinymce_typer.browser.validation import BrowserValidator
 from tinymce_typer.config.settings import BrowserConfig
 from tinymce_typer.exceptions import BrowserSetupError
@@ -20,5 +21,8 @@ class BrowserProviderFactory:
 
         if config.browser == "edge":
             return EdgeBrowserProvider(self.validator)
+
+        if config.browser == "remote":
+            return RemoteBrowserProvider(self.validator)
 
         raise BrowserSetupError(f"Unsupported browser provider: {config.browser}")

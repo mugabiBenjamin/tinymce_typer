@@ -7,7 +7,8 @@ from typing import Literal
 from tinymce_typer.logging.setup import LoggingConfig as RuntimeLoggingConfig
 
 
-BrowserName = Literal["chrome", "firefox", "edge"]
+BrowserName = Literal["chrome", "firefox", "edge", "remote"]
+RemoteBrowserName = Literal["chrome", "firefox", "edge"]
 VerificationMode = Literal["normalized-text", "exact-text", "html"]
 DiagnosticsMode = Literal["", "all", "browser", "clipboard", "editor", "file", "session"]
 OutputMode = Literal["terminal", "json"]
@@ -25,6 +26,8 @@ class BrowserConfig:
     use_existing: bool = False
     debugging_port: int = 9222
     marionette_port: int | None = None
+    remote_webdriver_url: str = ""
+    remote_browser_name: RemoteBrowserName = "chrome"
     force_navigation: bool = False
     close_on_complete: bool = False
     keep_browser_open: bool = True
@@ -135,6 +138,8 @@ class AppConfig:
                 use_existing=bool(data.get("use_existing", False)),
                 debugging_port=int(data.get("debugging_port", 9222)),
                 marionette_port=data.get("marionette_port"),
+                remote_webdriver_url=str(data.get("remote_webdriver_url", "")),
+                remote_browser_name=data.get("remote_browser_name", "chrome"),
                 force_navigation=bool(data.get("force_navigation", False)),
                 close_on_complete=bool(data.get("close_on_complete", False)),
                 keep_browser_open=bool(data.get("keep_browser_open", True)),
@@ -206,8 +211,11 @@ class AppConfig:
         if not self.content.file.strip():
             raise ConfigError("Main content file path is required.")
 
-        if self.browser.browser not in {"chrome", "firefox", "edge"}:
-            raise ConfigError("Browser must be one of: chrome, firefox, edge.")
+        if self.browser.browser not in {"chrome", "firefox", "edge", "remote"}:
+            raise ConfigError("Browser must be one of: chrome, firefox, edge, remote.")
+
+        if self.browser.remote_browser_name not in {"chrome", "firefox", "edge"}:
+            raise ConfigError("Remote browser name must be one of: chrome, firefox, edge.")
 
         if self.browser.debugging_port <= 0 or self.browser.debugging_port > 65535:
             raise ConfigError("Debugging port must be between 1 and 65535.")
@@ -218,6 +226,19 @@ class AppConfig:
 
         if self.browser.headless and self.browser.use_existing:
             raise ConfigError("Headless mode cannot be used when connecting to an existing browser session.")
+
+        if self.browser.browser == "remote":
+            if not self.browser.remote_webdriver_url.strip():
+                raise ConfigError("remote_webdriver_url is required when browser is remote.")
+
+            if self.browser.use_existing:
+                raise ConfigError("use_existing cannot be used when browser is remote.")
+
+            if self.browser.profile:
+                raise ConfigError("Browser profiles are not supported when browser is remote.")
+
+        if self.browser.browser != "remote" and self.browser.remote_webdriver_url.strip():
+            raise ConfigError("remote_webdriver_url can only be used when browser is remote.")
 
         if self.editor.editor_index is not None and self.editor.editor_index < 1:
             raise ConfigError("Editor index must be 1 or greater.")
@@ -306,6 +327,8 @@ class AppConfig:
             use_existing=self.browser.use_existing,
             debugging_port=self.browser.debugging_port,
             marionette_port=self.browser.marionette_port,
+            remote_webdriver_url=self.browser.remote_webdriver_url,
+            remote_browser_name=self.browser.remote_browser_name,
             force_navigation=self.browser.force_navigation,
             iframe_id=self.editor.iframe_id,
             editor_id=self.editor.editor_id,

@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from logging import config
 
 from tinymce_typer.browser.platform import PlatformInspector
 from tinymce_typer.browser.validation import BrowserValidator
@@ -37,7 +38,7 @@ class BrowserDiagnostic:
             self._configured_browser_result(config, platform_report),
         ]
 
-        if config.browser.use_existing:
+        if config.browser.use_existing or config.browser.browser == "remote":
             results.append(self._remote_port_result(config))
 
         return results
@@ -148,6 +149,29 @@ class BrowserDiagnostic:
         )
 
     def _configured_browser_result(self, config: AppConfig, platform_report) -> BrowserDiagnosticResult:
+        if config.browser.browser == "remote":
+            port_check = self.platform_inspector.check_remote_webdriver_url(
+                config.browser.remote_webdriver_url
+            )
+
+            return BrowserDiagnosticResult(
+                name="configured_browser",
+                passed=port_check.reachable,
+                message=(
+                    f"Remote WebDriver endpoint is reachable: {config.browser.remote_webdriver_url}"
+                    if port_check.reachable
+                    else f"Remote WebDriver endpoint is not reachable: {config.browser.remote_webdriver_url}"
+                ),
+                details={
+                    "browser": "remote",
+                    "remote_browser_name": config.browser.remote_browser_name,
+                    "remote_webdriver_url": config.browser.remote_webdriver_url,
+                    "host": port_check.host,
+                    "port": str(port_check.port),
+                    "reachable": str(port_check.reachable),
+                },
+            )
+
         configured = platform_report.browser(config.browser.browser)
 
         if configured is None:
@@ -175,7 +199,24 @@ class BrowserDiagnostic:
         )
 
     def _remote_port_result(self, config: AppConfig) -> BrowserDiagnosticResult:
-        if config.browser.browser == "chrome":
+        if config.browser.browser == "remote":
+            port_check = self.platform_inspector.check_remote_webdriver_url(
+                config.browser.remote_webdriver_url
+            )
+
+            return BrowserDiagnosticResult(
+                name="remote_webdriver_port",
+                passed=port_check.reachable,
+                message=port_check.message,
+                details={
+                    "url": config.browser.remote_webdriver_url,
+                    "host": port_check.host,
+                    "port": str(port_check.port),
+                    "reachable": str(port_check.reachable),
+                },
+            )
+
+        if config.browser.browser in {"chrome", "edge"}:
             port = config.browser.debugging_port
         else:
             port = config.browser.marionette_port or config.browser.debugging_port

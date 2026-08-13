@@ -4,6 +4,7 @@ import shutil
 import socket
 from dataclasses import dataclass
 from pathlib import Path
+from urllib.parse import urlparse
 
 
 @dataclass(frozen=True)
@@ -379,4 +380,36 @@ class PlatformInspector:
             port=port,
             reachable=reachable,
             message=f"Port {host}:{port} is reachable." if reachable else f"Port {host}:{port} is not reachable.",
+        )
+
+    def check_remote_webdriver_url(self, url: str, timeout_seconds: float = 1.0) -> PortCheck:
+        stripped = url.strip()
+
+        if not stripped:
+            return PortCheck(
+                host="",
+                port=0,
+                reachable=False,
+                message="Remote WebDriver URL is empty.",
+            )
+
+        parsed = urlparse(stripped)
+
+        if parsed.scheme not in {"http", "https"} or not parsed.hostname:
+            return PortCheck(
+                host="",
+                port=0,
+                reachable=False,
+                message="Remote WebDriver URL is not a valid http(s) URL.",
+            )
+
+        port = parsed.port
+
+        if port is None:
+            port = 443 if parsed.scheme == "https" else 80
+
+        return self.check_port(
+            host=parsed.hostname,
+            port=port,
+            timeout_seconds=timeout_seconds,
         )
