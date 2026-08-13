@@ -30,3 +30,6 @@ class SessionValidatorProtocol(Protocol):
         force_url: bool = False,
     ) -> ResumeValidationResult:
         ...
+
+    def editor_identifier(self, candidate: EditorCandidate) -> str:
+        ...
