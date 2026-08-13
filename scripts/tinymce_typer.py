@@ -38,10 +38,11 @@ def main() -> int:
 
     try:
         from tinymce_typer.app.typer_app import TyperApp
-    except ImportError:
+    except ImportError as exc:
         logger.error(
-            "TyperApp is not available yet. Move the existing automation workflow into "
-            "tinymce_typer.app.typer_app before using this thin entry point."
+            "TyperApp is not available. Ensure tinymce_typer.app.typer_app exists and imports correctly. "
+            "Original error: %s",
+            exc,
         )
         return 2
 

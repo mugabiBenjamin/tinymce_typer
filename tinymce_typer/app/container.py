@@ -8,13 +8,8 @@ from tinymce_typer.cli.prompts import PromptManager
 from tinymce_typer.config.settings import AppConfig
 from tinymce_typer.content.formatter import ContentFormatter
 from tinymce_typer.content.loader import ContentLoader
-from tinymce_typer.contracts.browser import BrowserLifecycleProtocol, BrowserNavigatorProtocol, BrowserProviderProtocol
-from tinymce_typer.contracts.editor import EditorDetectorProtocol
-from tinymce_typer.contracts.insertion import InsertionStrategyChainProtocol
-from tinymce_typer.contracts.progress import ProgressReporterProtocol
-from tinymce_typer.contracts.session import SessionStoreProtocol, SessionValidatorProtocol
-from tinymce_typer.contracts.verifier import VerificationReporterProtocol, VerificationServiceProtocol
 from tinymce_typer.editors.detector import EditorDetector
+from tinymce_typer.exceptions import SessionError
 from tinymce_typer.insertion.factory import InsertionStrategyFactory
 from tinymce_typer.output.json_output import JsonOutputWriter
 from tinymce_typer.output.terminal_output import TerminalOutputWriter
@@ -28,19 +23,19 @@ from tinymce_typer.verification.verifier import VerificationService
 
 @dataclass(frozen=True)
 class AppContainer:
-    browser_provider: BrowserProviderProtocol
-    browser_lifecycle: BrowserLifecycleProtocol
-    browser_navigator: BrowserNavigatorProtocol
-    content_loader: ContentLoader
-    content_formatter: ContentFormatter
-    editor_detector: EditorDetectorProtocol
-    insertion_chain: InsertionStrategyChainProtocol
-    session_store: SessionStoreProtocol | None
-    session_validator: SessionValidatorProtocol
-    verification_service: VerificationServiceProtocol
-    verification_reporter: VerificationReporterProtocol
-    progress_reporter: ProgressReporterProtocol
-    prompt_manager: PromptManager
+    browser_provider: object
+    browser_lifecycle: object
+    browser_navigator: object
+    content_loader: object
+    content_formatter: object
+    editor_detector: object
+    insertion_chain: object
+    session_store: object | None
+    session_validator: object
+    verification_service: object
+    verification_reporter: object
+    progress_reporter: object
+    prompt_manager: object
     output_writer: object
 
 
@@ -62,13 +57,13 @@ class AppContainerFactory:
             verification_reporter=VerificationReporter(config.verification.verification_report_dir),
             progress_reporter=self._build_progress_reporter(config),
             prompt_manager=PromptManager(
-                assume_yes=config.cli.yes,
                 non_interactive=config.cli.non_interactive,
+                assume_yes=config.cli.yes,
             ),
             output_writer=self._build_output_writer(config),
         )
 
-    def _build_session_store(self, config: AppConfig, password: str) -> SessionStoreProtocol | None:
+    def _build_session_store(self, config: AppConfig, password: str) -> object | None:
         if config.session.no_session:
             return None
 
@@ -83,23 +78,23 @@ class AppContainerFactory:
             return ""
 
         if config.cli.non_interactive:
-            raise ValueError("Encrypted sessions require an interactive password prompt.")
+            raise SessionError("Encrypted sessions require an interactive password prompt.")
 
-        return getpass("Session password: ")
+        password = getpass("Session password: ")
 
-    def _build_progress_reporter(self, config: AppConfig) -> ProgressReporterProtocol:
-        output_mode = getattr(config.output, "mode", "terminal")
-        quiet_progress = getattr(config.output, "quiet_progress", False)
+        if not password:
+            raise SessionError("Encrypted sessions require a non-empty password.")
 
-        if output_mode == "json" or quiet_progress:
+        return password
+
+    def _build_progress_reporter(self, config: AppConfig) -> object:
+        if config.output.mode == "json" or config.output.quiet_progress:
             return SilentProgressReporter()
 
         return TerminalProgressReporter()
 
     def _build_output_writer(self, config: AppConfig) -> object:
-        output_mode = getattr(config.output, "mode", "terminal")
-
-        if output_mode == "json":
+        if config.output.mode == "json":
             return JsonOutputWriter()
 
         return TerminalOutputWriter()
