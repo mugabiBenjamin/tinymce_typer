@@ -30,6 +30,9 @@ class FirefoxBrowserProvider:
     def _start_new(self, config: BrowserConfig) -> BrowserSession:
         options = webdriver.FirefoxOptions()
 
+        if config.headless:
+            options.add_argument("-headless")
+
         if config.profile:
             options.add_argument("-profile")
             options.add_argument(config.profile)
@@ -50,7 +53,6 @@ class FirefoxBrowserProvider:
             is_existing_session=False,
             should_quit_driver=True,
         )
-
     def _connect_existing(self, config: BrowserConfig) -> BrowserSession:
         port = config.marionette_port or config.debugging_port
 

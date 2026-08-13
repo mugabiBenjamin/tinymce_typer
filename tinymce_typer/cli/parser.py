@@ -77,6 +77,22 @@ def build_parser(defaults: dict | None = None) -> argparse.ArgumentParser:
         default=_str_default(defaults, "browser", "chrome"),
         help="Browser to use",
     )
+
+    headless_group = parser.add_mutually_exclusive_group()
+    headless_group.add_argument(
+        "--headless",
+        dest="headless",
+        action="store_true",
+        default=_bool_default(defaults, "headless"),
+        help="Run the browser without a visible window",
+    )
+    headless_group.add_argument(
+        "--headed",
+        dest="headless",
+        action="store_false",
+        help="Run the browser with a visible window, overriding headless defaults",
+    )
+
     parser.add_argument(
         "--profile",
         default=_str_default(defaults, "profile"),
