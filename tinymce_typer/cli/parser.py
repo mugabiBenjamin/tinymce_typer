@@ -73,9 +73,9 @@ def build_parser(defaults: dict | None = None) -> argparse.ArgumentParser:
 
     parser.add_argument(
         "--browser",
-        choices=["chrome", "firefox", "edge"],
+        choices=["chrome", "firefox", "edge", "remote"],
         default=_str_default(defaults, "browser", "chrome"),
-        help="Browser to use",
+        help="Browser provider to use",
     )
 
     headless_group = parser.add_mutually_exclusive_group()
@@ -279,6 +279,19 @@ def build_parser(defaults: dict | None = None) -> argparse.ArgumentParser:
         default=defaults.get("marionette_port"),
         help="Firefox Marionette port",
     )
+
+    parser.add_argument(
+        "--remote-webdriver-url",
+        default=_str_default(defaults, "remote_webdriver_url"),
+        help="Remote WebDriver endpoint for Selenium Grid, for example http://localhost:4444/wd/hub",
+    )
+    parser.add_argument(
+        "--remote-browser-name",
+        choices=["chrome", "firefox", "edge"],
+        default=_str_default(defaults, "remote_browser_name", "chrome"),
+        help="Browser to request from the remote WebDriver provider",
+    )
+
     parser.add_argument(
         "--force-navigation",
         action="store_true",

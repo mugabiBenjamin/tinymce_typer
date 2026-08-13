@@ -14,6 +14,7 @@ from tinymce_typer.browser.platform import (
     PlatformReport,
     PortCheck,
 )
+from tinymce_typer.browser.remote import RemoteBrowserProvider
 from tinymce_typer.browser.validation import BrowserValidationResult, BrowserValidator
 
 __all__ = [
@@ -22,6 +23,7 @@ __all__ = [
     "ChromeBrowserProvider",
     "EdgeBrowserProvider",
     "FirefoxBrowserProvider",
+    "RemoteBrowserProvider",
     "BrowserProviderFactory",
     "BrowserLifecycleManager",
     "BrowserNavigator",
