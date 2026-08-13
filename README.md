@@ -11,6 +11,8 @@ TinyMCE is the primary target. CKEditor, Quill, and generic `contenteditable` el
 The project has been refactored into a modular architecture:
 
 - browser providers and lifecycle handling
+- local and remote browser support
+- platform/environment diagnostics
 - content loading, formatting, sanitization, and hashing
 - editor detection and editor-specific adapters
 - insertion strategies with fallback chaining
@@ -25,23 +27,25 @@ The project has been refactored into a modular architecture:
 
 ## Table of Contents
 
-- [TinyMCE Typer](#tinymce-typer)
-  - [Support Status](#support-status)
-  - [Features](#features)
-  - [Safety and Limitations](#safety-and-limitations)
-  - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
-  - [Supported File Types](#supported-file-types)
-  - [Usage](#usage)
-  - [Insertion Strategies](#insertion-strategies)
-  - [Sessions and Resume Safety](#sessions-and-resume-safety)
-  - [Verification](#verification)
-  - [Progress Reporting](#progress-reporting)
-  - [JSON Output](#json-output)
-  - [Diagnostics](#diagnostics)
-  - [Configuration](#configuration)
-  - [Command-Line Options](#command-line-options)
-  - [Project Layout](#project-layout)
+- [Support Status](#support-status)
+- [Features](#features)
+- [Safety and Limitations](#safety-and-limitations)
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Supported File Types](#supported-file-types)
+- [Usage](#usage)
+- [Browser Providers](#browser-providers)
+- [RemoteWebDriver / Selenium Grid](#remotewebdriver--selenium-grid)
+- [Insertion Strategies](#insertion-strategies)
+- [Sessions and Resume Safety](#sessions-and-resume-safety)
+- [Verification](#verification)
+- [Progress Reporting](#progress-reporting)
+- [JSON Output](#json-output)
+- [Diagnostics](#diagnostics)
+- [Configuration](#configuration)
+- [Command-Line Options](#command-line-options)
+- [Environment Variables](#environment-variables)
+- [Project Layout](#project-layout)
 
 ## Support Status
 
@@ -51,8 +55,12 @@ The project has been refactored into a modular architecture:
 | CKEditor | Best-effort support | Detects common CKEditor iframe structures; behavior can vary by CKEditor version and site integration. |
 | Quill | Best-effort support | Detects `.ql-editor` and attempts Quill-aware insertion where possible. |
 | Generic `contenteditable` | Fallback support | Used when no known editor framework is detected. |
-| Chrome | Primary browser support | Supports new browser sessions and existing Chrome sessions through remote debugging. |
-| Firefox | New-session support | New Firefox sessions are supported; attaching to an already-running Firefox session is not reliably supported yet. |
+| Chrome | Primary browser support | Supports new sessions, headless mode, profiles, and existing sessions through remote debugging. |
+| Firefox | New-session support | New Firefox sessions and headless mode are supported; attaching to an already-running Firefox session is not reliably supported yet. |
+| Microsoft Edge | Supported | Chromium-based Edge provider. Supports new sessions, headless mode, profiles, and existing Edge sessions through remote debugging. |
+| RemoteWebDriver / Selenium Grid | Supported | Uses a remote WebDriver endpoint such as Selenium Grid or browser containers. |
+| Headless mode | Supported | Available for new local browser sessions and remote sessions; not supported with `--use-existing`. |
+| Platform diagnostics | Supported | Reports OS, architecture, display server, container hints, browser availability, clipboard backend, headless recommendation, and remote port reachability. |
 | Clipboard insertion | Best-effort support | Depends on `pyperclip`, operating-system clipboard utilities, browser focus, and site paste handling. |
 | Direct HTML insertion | Fast but limited | Performs DOM/editor API insertion, not human typing. |
 | Character typing | Compatibility-oriented | Can use Selenium `send_keys()` for real keystroke simulation. |
@@ -61,7 +69,7 @@ The project has been refactored into a modular architecture:
 | Encrypted sessions | Supported | Uses `cryptography` with Fernet and PBKDF2-HMAC-SHA256, with a random salt per encrypted session. |
 | Verification | Structured support | Supports exact text, normalized text, and HTML comparison modes. |
 | JSON output | Supported | Produces structured output for scripts and automation. |
-| Diagnostics | Supported | Browser, clipboard, editor, file, and session diagnostics are available. |
+| Diagnostics | Supported | Browser/platform, clipboard, editor, file, and session diagnostics are available. |
 
 ## Features
 
@@ -73,9 +81,17 @@ The project has been refactored into a modular architecture:
 - Browser provider architecture:
   - Chrome provider
   - Firefox provider
+  - Microsoft Edge provider
+  - RemoteWebDriver provider
   - browser lifecycle manager
   - browser navigation service
   - browser validation diagnostics
+  - platform/environment diagnostics
+- Browser execution modes:
+  - visible local browser
+  - headless local browser
+  - existing Chrome/Edge session through remote debugging
+  - remote Selenium Grid/browser container
 - Multiple insertion strategies:
   - clipboard
   - direct HTML / DOM insertion
@@ -112,7 +128,7 @@ The project has been refactored into a modular architecture:
   - JSON output
   - silent or terminal progress reporting
 - Diagnostics:
-  - browser diagnostics
+  - browser/platform diagnostics
   - clipboard diagnostics
   - editor diagnostics
   - content file diagnostics
@@ -173,11 +189,35 @@ Use browser profiles carefully:
 - Do not automate pages where accidental submission would cause harm.
 - Avoid pages containing password fields or destructive actions.
 
+Browser profiles are supported for local Chrome, Firefox, and Edge sessions. They are not supported with `--browser remote`.
+
 ### Existing browser sessions
 
-Existing Chrome sessions can be used through remote debugging.
+Existing Chrome and Edge sessions can be used through remote debugging.
 
 Existing Firefox sessions are not reliably supported by the current Firefox provider. Start a new Firefox session instead.
+
+Headless mode cannot be used with `--use-existing`, because an already-running visible browser cannot be converted into headless mode.
+
+### Headless mode
+
+Headless mode starts the browser without a visible window. It is useful for CI, containers, remote servers, and repeatable automation.
+
+Some websites behave differently in headless browsers, block automation more aggressively, or require visual/manual review before final submission.
+
+For sensitive forms or authenticated pages, use visible browser mode first, confirm that insertion and verification behave correctly, then use headless mode only for repeatable trusted workflows.
+
+### Remote browser sessions
+
+Remote mode uses Selenium RemoteWebDriver. The browser runs in a remote Selenium Grid, Docker container, VPS, or other remote WebDriver service.
+
+Remote mode does not support:
+
+- `--use-existing`
+- local browser profiles through `--profile`
+- local browser remote debugging ports
+
+Use remote browser/container capabilities instead.
 
 ### Verification limitations
 
@@ -204,7 +244,11 @@ Install:
 
 1. Python 3.12+
 2. `uv`
-3. Chrome or Firefox
+3. At least one supported browser or a remote WebDriver endpoint:
+   - Google Chrome
+   - Mozilla Firefox
+   - Microsoft Edge
+   - Selenium Grid / RemoteWebDriver
 4. Clipboard utilities when using clipboard mode on Linux:
    - X11: `xclip` or `xsel`
    - Wayland: `wl-clipboard`
@@ -252,6 +296,8 @@ For X11 alternative clipboard support:
 sudo apt install -y xsel
 ```
 
+For container/server usage, prefer `--headless` or `--browser remote`.
+
 ## Supported File Types
 
 TinyMCE Typer reads UTF-8 text-based files.
@@ -291,6 +337,24 @@ uv run scripts/tinymce_typer.py https://example.com/page-with-editor content.txt
 uv run scripts/tinymce_typer.py https://example.com/page-with-editor content.txt --browser firefox
 ```
 
+### Use Microsoft Edge
+
+```bash
+uv run scripts/tinymce_typer.py https://example.com/page-with-editor content.txt --browser edge
+```
+
+### Run in headless mode
+
+```bash
+uv run scripts/tinymce_typer.py https://example.com/page-with-editor content.txt --headless
+```
+
+Force visible mode when an environment/config file enables headless mode:
+
+```bash
+TINYMCE_TYPER_HEADLESS=true uv run scripts/tinymce_typer.py https://example.com/page-with-editor content.txt --headed
+```
+
 ### Specify an iframe ID
 
 ```bash
@@ -328,7 +392,27 @@ google-chrome --remote-debugging-port=9222
 Then connect the script:
 
 ```bash
-uv run scripts/tinymce_typer.py https://example.com/page-with-editor content.txt --use-existing --debugging-port 9222
+uv run scripts/tinymce_typer.py https://example.com/page-with-editor content.txt --browser chrome --use-existing --debugging-port 9222
+```
+
+### Connect to an existing Edge session
+
+Start Edge with remote debugging enabled:
+
+```bash
+microsoft-edge --remote-debugging-port=9222
+```
+
+On Windows, the command may be:
+
+```powershell
+msedge.exe --remote-debugging-port=9222
+```
+
+Then connect the script:
+
+```bash
+uv run scripts/tinymce_typer.py https://example.com/page-with-editor content.txt --browser edge --use-existing --debugging-port 9222
 ```
 
 By default, existing browser mode does not navigate away from the current page unless forced.
@@ -336,7 +420,7 @@ By default, existing browser mode does not navigate away from the current page u
 Force navigation:
 
 ```bash
-uv run scripts/tinymce_typer.py https://example.com/page-with-editor content.txt --use-existing --force-navigation
+uv run scripts/tinymce_typer.py https://example.com/page-with-editor content.txt --browser chrome --use-existing --force-navigation
 ```
 
 ### Wait for a selector before editor detection
@@ -361,6 +445,82 @@ Add headings before each file:
 
 ```bash
 uv run scripts/tinymce_typer.py https://example.com/editor first.md --files first.md second.md --include-file-headings
+```
+
+## Browser Providers
+
+### Chrome
+
+```bash
+uv run scripts/tinymce_typer.py https://example.com/editor content.txt --browser chrome
+```
+
+### Firefox
+
+```bash
+uv run scripts/tinymce_typer.py https://example.com/editor content.txt --browser firefox
+```
+
+### Microsoft Edge
+
+```bash
+uv run scripts/tinymce_typer.py https://example.com/editor content.txt --browser edge
+```
+
+### Remote
+
+```bash
+uv run scripts/tinymce_typer.py https://example.com/editor content.txt \
+  --browser remote \
+  --remote-webdriver-url http://localhost:4444/wd/hub \
+  --remote-browser-name chrome
+```
+
+## RemoteWebDriver / Selenium Grid
+
+Remote mode lets TinyMCE Typer run locally while the browser runs in Selenium Grid or a browser container.
+
+Start a Selenium standalone Chrome container:
+
+```bash
+docker run --rm -p 4444:4444 selenium/standalone-chrome
+```
+
+Then run:
+
+```bash
+uv run scripts/tinymce_typer.py https://example.com/page-with-editor content.txt \
+  --browser remote \
+  --remote-webdriver-url http://localhost:4444/wd/hub \
+  --remote-browser-name chrome
+```
+
+Remote browser names:
+
+```text
+chrome
+firefox
+edge
+```
+
+Remote mode is useful for:
+
+- Docker
+- CI
+- VPS deployments
+- Selenium Grid
+- cloud browser workers
+
+Remote mode does not support `--use-existing` or local browser profiles. Use remote browser/container capabilities instead.
+
+Run remote diagnostics first:
+
+```bash
+uv run scripts/tinymce_typer.py https://example.com/editor content.txt \
+  --browser remote \
+  --remote-webdriver-url http://localhost:4444/wd/hub \
+  --remote-browser-name chrome \
+  --diagnostics browser
 ```
 
 ## Insertion Strategies
@@ -513,12 +673,6 @@ Invalid passwords are refused. The tool does not silently fall back to raw sessi
 
 ## Verification
 
-Verification behavior lives in:
-
-```text
-tinymce_typer/verification/
-```
-
 Available modes:
 
 - `normalized-text`
@@ -597,12 +751,6 @@ uv run scripts/tinymce_typer.py https://example.com/editor content.txt --verific
 
 ## Progress Reporting
 
-Progress reporters live in:
-
-```text
-tinymce_typer/progress/
-```
-
 Available reporters:
 
 - terminal
@@ -623,6 +771,8 @@ Use JSON output when scripting:
 ```bash
 uv run scripts/tinymce_typer.py https://example.com/editor content.txt --json
 ```
+
+JSON mode automatically silences progress output so stdout remains machine-readable.
 
 JSON output includes:
 
@@ -662,8 +812,6 @@ Example shape:
 }
 ```
 
-When JSON mode is enabled, progress output should be silent so stdout remains machine-readable.
-
 ## Diagnostics
 
 Run diagnostics instead of content insertion:
@@ -697,6 +845,51 @@ uv run scripts/tinymce_typer.py https://example.com/editor content.txt --diagnos
 
 Note: the current CLI still requires the positional `url` and `file` arguments even for diagnostics.
 
+### Platform diagnostics
+
+Browser diagnostics include platform/environment checks:
+
+- operating system
+- OS release/version
+- architecture
+- machine/processor
+- Python version
+- Linux display server: X11, Wayland, or none
+- Docker/container hints
+- headless-mode recommendation
+- Chrome availability
+- Firefox availability
+- Edge availability
+- configured browser availability
+- remote debugging port reachability when using `--use-existing`
+- RemoteWebDriver endpoint reachability when using `--browser remote`
+- clipboard backend hints
+
+Example:
+
+```bash
+uv run scripts/tinymce_typer.py https://example.com/editor content.txt \
+  --browser remote \
+  --remote-webdriver-url http://localhost:4444/wd/hub \
+  --diagnostics browser
+```
+
+Expected diagnostic categories include:
+
+```text
+platform
+display_server
+container
+headless_mode
+clipboard_backend
+browser_matrix
+browser_validation
+configured_browser
+remote_webdriver_port
+```
+
+On Linux, if no display server is detected, use `--headless` or provide X11/Wayland display access.
+
 ## Configuration
 
 The tool can read configuration from:
@@ -716,8 +909,10 @@ Example JSON config:
 
 ```json
 {
-  "browser": "chrome",
-  "use_existing": false,
+  "browser": "remote",
+  "headless": true,
+  "remote_webdriver_url": "http://localhost:4444/wd/hub",
+  "remote_browser_name": "chrome",
   "iframe_id": "tinymce_ifr",
   "strategy": "auto",
   "formatted": false,
@@ -748,11 +943,15 @@ uv run scripts/tinymce_typer.py https://example.com/editor content.txt --config 
 
 | Option | Description |
 | --- | --- |
-| `--browser {chrome,firefox}` | Browser to use. Default: `chrome` |
-| `--profile PROFILE` | Path to browser profile directory |
-| `--use-existing` | Attach to an existing browser session |
-| `--debugging-port PORT` | Chrome remote debugging port. Default: `9222` |
+| `--browser {chrome,firefox,edge,remote}` | Browser provider to use. Default: `chrome` |
+| `--headless` | Run the browser without a visible window. Useful for CI, containers, and servers |
+| `--headed` | Force visible browser mode, overriding `TINYMCE_TYPER_HEADLESS=true` |
+| `--profile PROFILE` | Path to local browser profile directory |
+| `--use-existing` | Attach to an existing Chrome/Edge browser session through remote debugging |
+| `--debugging-port PORT` | Chrome/Edge remote debugging port. Default: `9222` |
 | `--marionette-port PORT` | Firefox Marionette port placeholder |
+| `--remote-webdriver-url URL` | Remote WebDriver endpoint used when `--browser remote` |
+| `--remote-browser-name {chrome,firefox,edge}` | Browser requested from the remote WebDriver provider. Default: `chrome` |
 | `--force-navigation` | Navigate to the target URL even when using an existing browser |
 | `--close-on-complete` | Close the browser after completion |
 | `--keep-open`, `--keep-browser-open` | Keep the browser open after completion |
@@ -835,6 +1034,90 @@ uv run scripts/tinymce_typer.py https://example.com/editor content.txt --config 
 | `--non-interactive` | Run without interactive prompts |
 | `--diagnostics {all,browser,clipboard,editor,file,session}` | Run diagnostics instead of insertion |
 
+## Environment Variables
+
+Environment variables use the `TINYMCE_TYPER_` prefix.
+
+### Browser
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `TINYMCE_TYPER_BROWSER` | `chrome` | Browser provider: `chrome`, `firefox`, `edge`, or `remote` |
+| `TINYMCE_TYPER_HEADLESS` | `false` | Run browser without a visible window |
+| `TINYMCE_TYPER_BROWSER_PROFILE` | empty | Local browser profile path |
+| `TINYMCE_TYPER_USE_EXISTING` | `false` | Attach to existing Chrome/Edge browser session |
+| `TINYMCE_TYPER_DEBUGGING_PORT` | `9222` | Chrome/Edge remote debugging port |
+| `TINYMCE_TYPER_MARIONETTE_PORT` | empty | Firefox Marionette port placeholder |
+| `TINYMCE_TYPER_REMOTE_WEBDRIVER_URL` | empty | Remote WebDriver endpoint used when `TINYMCE_TYPER_BROWSER=remote` |
+| `TINYMCE_TYPER_REMOTE_BROWSER_NAME` | `chrome` | Remote browser requested from Selenium Grid: `chrome`, `firefox`, or `edge` |
+| `TINYMCE_TYPER_FORCE_NAVIGATION` | `false` | Navigate even when using an existing browser session |
+| `TINYMCE_TYPER_CLOSE_ON_COMPLETE` | `false` | Close browser after successful completion |
+| `TINYMCE_TYPER_KEEP_BROWSER_OPEN` | `true` | Keep browser open after completion |
+| `TINYMCE_TYPER_DETACH` | `false` | Detach from browser without closing |
+| `TINYMCE_TYPER_BROWSER_WAIT_TIMEOUT_SECONDS` | `0` | Seconds to keep browser open before closing |
+| `TINYMCE_TYPER_IMPLICIT_WAIT_SECONDS` | `10` | Selenium implicit wait |
+
+### Editor
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `TINYMCE_TYPER_IFRAME_ID` | empty | Iframe ID containing the editor |
+| `TINYMCE_TYPER_EDITOR_ID` | empty | Editor element ID |
+| `TINYMCE_TYPER_DETECT_MULTIPLE` | `false` | Detect and select from multiple editors |
+| `TINYMCE_TYPER_EDITOR_INDEX` | empty | 1-based editor index |
+| `TINYMCE_TYPER_WAIT_SELECTOR` | empty | CSS selector to wait for before editor detection |
+
+### Insertion
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `TINYMCE_TYPER_TYPE_DELAY` | `0.01` | Delay between character insertions |
+| `TINYMCE_TYPER_FORMATTED` | `false` | Treat content as HTML |
+| `TINYMCE_TYPER_NO_CLIPBOARD` | `false` | Disable clipboard strategy |
+| `TINYMCE_TYPER_BATCH` | `false` | Enable batch insertion |
+| `TINYMCE_TYPER_BATCH_SIZE` | `50` | Characters per batch |
+| `TINYMCE_TYPER_BATCH_DELAY` | `0.1` | Delay between batches |
+| `TINYMCE_TYPER_STRATEGY` | `auto` | Strategy: `auto`, `clipboard`, `direct-html`, `character`, or `batch` |
+| `TINYMCE_TYPER_REAL_KEYSTROKES` | `true` | Use Selenium `send_keys()` for character strategy |
+
+### Sessions
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `TINYMCE_TYPER_NO_SESSION` | `false` | Disable sessions |
+| `TINYMCE_TYPER_RESET` | `false` | Delete previous session |
+| `TINYMCE_TYPER_RESUME` | `false` | Resume without asking |
+| `TINYMCE_TYPER_NO_RESUME` | `false` | Do not resume |
+| `TINYMCE_TYPER_ENCRYPT_SESSION` | `false` | Encrypt session data |
+| `TINYMCE_TYPER_SESSION_FILE` | `tinymce_session.json` | Session file path |
+| `TINYMCE_TYPER_FORCE_RESUME_URL` | `false` | Allow URL mismatch during resume |
+
+### Verifications
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `TINYMCE_TYPER_NO_VERIFICATION` | `false` | Disable verification |
+| `TINYMCE_TYPER_VERIFICATION_MODE` | `normalized-text` | Verification mode |
+| `TINYMCE_TYPER_VERIFICATION_THRESHOLD` | `0.90` | Similarity threshold |
+| `TINYMCE_TYPER_VERIFICATION_REPORT` | `false` | Write verification report on failure |
+| `TINYMCE_TYPER_VERIFICATION_REPORT_DIR` | `diagnostics/verification` | Verification artifacts directory |
+| `TINYMCE_TYPER_SCREENSHOT_ON_VERIFICATION_FAILURE` | `false` | Save screenshot on verification failure |
+
+### Output, logging, and CLI behavior
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `TINYMCE_TYPER_JSON` | `false` | Emit final output as JSON |
+| `TINYMCE_TYPER_OUTPUT_MODE` | `terminal` | Final output mode |
+| `TINYMCE_TYPER_QUIET_PROGRESS` | `false` | Disable progress output |
+| `TINYMCE_TYPER_LOG_LEVEL` | `INFO` | Logging level |
+| `TINYMCE_TYPER_LOG_FILE` | empty | Log file path |
+| `TINYMCE_TYPER_VERBOSE` | `false` | Enable verbose logs |
+| `TINYMCE_TYPER_QUIET` | `false` | Only show errors |
+| `TINYMCE_TYPER_YES` | `false` | Automatically answer yes to safe prompts |
+| `TINYMCE_TYPER_NON_INTERACTIVE` | `false` | Disable interactive prompts |
+| `TINYMCE_TYPER_DIAGNOSTICS` | empty | Diagnostics mode |
+
 ## Project Layout
 
 ```text
@@ -843,26 +1126,25 @@ tinymce_typer/
 ├── LICENSE
 ├── pyproject.toml
 ├── README.md
-├── repomix-output.xml
-├── scripts
+├── scripts/
 │   └── tinymce_typer.py
-├── tinymce_typer
-│   ├── app
-│   ├── browser
-│   ├── cli
-│   ├── config
-│   ├── content
-│   ├── contracts
-│   ├── diagnostics
-│   ├── editors
+├── tinymce_typer/
+│   ├── app/
+│   ├── browser/
+│   ├── cli/
+│   ├── config/
+│   ├── content/
+│   ├── contracts/
+│   ├── diagnostics/
+│   ├── editors/
+│   ├── insertion/
+│   ├── logging/
+│   ├── output/
+│   ├── progress/
+│   ├── sessions/
+│   ├── verification/
 │   ├── exceptions.py
-│   ├── __init__.py
-│   ├── insertion
-│   ├── logging
-│   ├── output
-│   ├── progress
-│   ├── sessions
-│   └── verification
+│   └── __init__.py
 └── uv.lock
 ```
 
