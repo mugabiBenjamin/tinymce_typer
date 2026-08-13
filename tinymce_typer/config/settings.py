@@ -115,6 +115,9 @@ class AppConfig:
     @classmethod
     def from_namespace(cls, namespace: Namespace) -> "AppConfig":
         data = vars(namespace)
+        
+        output_mode = "json" if bool(data.get("json", False)) else str(data.get("output_mode", "terminal"))
+        quiet_progress = bool(data.get("quiet_progress", False)) or output_mode == "json"
 
         config = cls(
             content=ContentConfig(
@@ -185,8 +188,8 @@ class AppConfig:
                 mode=str(data.get("diagnostics", "")),
             ),
             output=OutputConfig(
-                mode="json" if bool(data.get("json", False)) else str(data.get("output_mode", "terminal")),
-                quiet_progress=bool(data.get("quiet_progress", False)),
+                mode=output_mode,
+                quiet_progress=quiet_progress,
             ),
             config_path=str(data.get("config", "")),
         )
@@ -281,9 +284,6 @@ class AppConfig:
 
         if self.output.mode not in {"terminal", "json"}:
             raise ConfigError("Output mode must be terminal or json.")
-
-        if self.output.mode == "json" and not self.output.quiet_progress:
-            raise ConfigError("JSON output requires quiet progress so stdout remains machine-readable.")
 
     def to_legacy_namespace(self) -> SimpleNamespace:
         return SimpleNamespace(
